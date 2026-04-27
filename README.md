@@ -1,44 +1,53 @@
 # Controle Financeiro
 
-App simples para registrar entradas, saidas, compras parceladas e contas fixas, com sincronizacao entre celular e computador usando Supabase.
+App web simples e responsivo para controle financeiro pessoal, feito para uso rapido no celular e no computador. Ele permite registrar entradas, saidas, compras parceladas e contas fixas, mantendo os dados sincronizados entre dispositivos com Supabase.
 
-## Caminho Mais Facil
+## Funcionalidades
 
-Use esta combinacao:
+- Resumo mensal com saldo, entradas, saidas e compromissos ativos.
+- Lancamento rapido de receitas e despesas.
+- Compras parceladas aparecendo automaticamente nos proximos meses.
+- Contas fixas mensais com opcao de encerramento.
+- Historico com busca e filtro por tipo.
+- Login com e-mail e senha.
+- Sincronizacao entre celular e PC usando Supabase.
+- Funcionamento como site estatico, ideal para GitHub Pages.
 
-- `GitHub Pages` para publicar o app.
-- `Supabase` para login e banco de dados.
-- O mesmo e-mail no celular e no PC para ver os mesmos dados.
+## Tecnologias
 
-## 1. Criar O Banco No Supabase
+- HTML
+- CSS
+- JavaScript
+- Supabase Auth
+- Supabase Database
+- GitHub Pages
 
-1. Crie um projeto em https://supabase.com.
-2. Abra `SQL Editor`.
-3. Rode o conteudo de `supabase-setup.sql`.
-4. Confira se as tabelas `transactions` e `recurring_rules` foram criadas.
+## Como Usar
 
-O SQL ja ativa `Row Level Security`, entao cada conta acessa somente os proprios dados.
+Depois de publicado, abra o link do app no celular ou no computador.
 
-## 2. Configurar O Login
+1. Clique em `Conectar`.
+2. Crie uma conta com e-mail e senha.
+3. Confirme o e-mail, se o Supabase solicitar.
+4. Entre com o mesmo e-mail e senha nos outros dispositivos.
+5. Cadastre seus lancamentos normalmente.
 
-No Supabase, abra:
+Os dados ficam salvos no Supabase e aparecem nos dispositivos conectados com a mesma conta.
 
-`Authentication` > `URL Configuration`
+## Configuracao Do Supabase
 
-Depois preencha:
+Crie um projeto no Supabase e rode o arquivo `supabase-setup.sql` no `SQL Editor`.
 
-- `Site URL`: a URL publicada do app.
-- `Redirect URLs`: a mesma URL publicada do app.
+Esse script cria as tabelas:
 
-No GitHub Pages, essa URL normalmente fica parecida com:
+- `transactions`
+- `recurring_rules`
 
-```text
-https://seu-usuario.github.io/nome-do-repositorio/
-```
+Ele tambem ativa `Row Level Security`, garantindo que cada usuario veja apenas os proprios dados.
 
-## 3. Configurar A Conexao Do App
+## Configuracao Do App
 
-Abra `supabase-config.js` e preencha:
+Edite o arquivo `supabase-config.js`:
 
 ```js
 window.FLUXO_SUPABASE_CONFIG = window.FLUXO_SUPABASE_CONFIG || {
@@ -47,30 +56,78 @@ window.FLUXO_SUPABASE_CONFIG = window.FLUXO_SUPABASE_CONFIG || {
 };
 ```
 
-Use somente:
+Use apenas:
 
-- `publishable key`, quando estiver disponivel.
-- ou `anon key`, em projetos que ainda usam as chaves antigas.
+- `publishable key`
+- ou `anon key`
 
 Nunca use:
 
 - `secret key`
 - `service_role`
 
-Essas chaves privadas dao acesso elevado e nao devem aparecer no navegador nem no GitHub.
+Essas chaves privadas dao acesso elevado ao projeto e nao devem ir para o navegador nem para o GitHub.
 
-## 4. Publicar No GitHub Pages
+## Configuracao De Login
 
-1. Crie um repositorio no GitHub.
-2. Envie estes arquivos para o repositorio.
-3. Abra `Settings` > `Pages`.
-4. Em `Build and deployment`, escolha publicar a branch `main`.
-5. Abra a URL gerada pelo GitHub Pages.
+No Supabase, confira:
 
-Depois disso, crie uma conta com e-mail e senha no app. Use o mesmo e-mail e senha no celular e no PC. Os lancamentos passam a ficar salvos no Supabase.
+1. Abra `Authentication`.
+2. Va em `Providers`.
+3. Habilite o provedor `Email`.
+4. Em `URL Configuration`, configure:
 
-Se o Supabase pedir confirmacao de e-mail na criacao da conta, confirme pelo link recebido uma unica vez. Depois disso, o login passa a ser por senha.
+```text
+Site URL: https://seu-usuario.github.io/nome-do-repositorio/
+Redirect URLs: https://seu-usuario.github.io/nome-do-repositorio/
+```
 
-## Observacao Importante
+Para este projeto no GitHub Pages, o formato esperado e:
 
-A `publishable key` ou `anon key` pode aparecer no app. A seguranca dos dados vem do login do Supabase e das regras `Row Level Security` criadas em `supabase-setup.sql`.
+```text
+https://kiwor101.github.io/financfacil/
+```
+
+## Publicacao No GitHub Pages
+
+1. Envie os arquivos para um repositorio no GitHub.
+2. Abra `Settings`.
+3. Clique em `Pages`.
+4. Em `Build and deployment`, selecione `Deploy from a branch`.
+5. Escolha a branch `main`.
+6. Escolha a pasta `/root`.
+7. Clique em `Save`.
+
+Depois de alguns minutos, o app ficara disponivel na URL do GitHub Pages.
+
+## Rodando Localmente
+
+Como o projeto e estatico, basta abrir o arquivo `index.html` no navegador.
+
+Para testar o login do Supabase com redirecionamento, o ideal e usar a versao publicada no GitHub Pages.
+
+## Estrutura
+
+```text
+.
++-- index.html
++-- styles.css
++-- app.js
++-- supabase-config.js
++-- supabase-setup.sql
++-- README.md
+```
+
+## Observacoes De Seguranca
+
+A chave publica do Supabase pode aparecer no app. Em aplicacoes web, ela precisa ir para o navegador para que o cliente consiga se conectar ao Supabase.
+
+A protecao dos dados vem de:
+
+- login do Supabase Auth
+- tabelas com `Row Level Security`
+- politicas que limitam cada usuario ao proprio `user_id`
+
+## Status
+
+Projeto em evolucao, com foco em uso pessoal diario, interface compacta e sincronizacao simples entre celular e computador.
