@@ -234,6 +234,17 @@
                 <select id="categoryInput" name="category" required></select>
               </label>
 
+              <label class="field" hidden id="categoryCustomField">
+                <span class="field-label">Qual?</span>
+                <input
+                  id="categoryCustomInput"
+                  maxlength="40"
+                  name="categoryCustom"
+                  placeholder="Digite a categoria"
+                  type="text"
+                />
+              </label>
+
               <label class="field">
                 <span class="field-label">Data</span>
                 <input id="dateInput" name="date" required type="date" />
@@ -279,13 +290,18 @@
               </p>
             </div>
 
-            <button
-              class="primary-button primary-button-compact"
-              id="submitEntryButton"
-              type="submit"
-            >
-              Salvar
-            </button>
+            <div class="form-actions">
+              <button
+                class="primary-button primary-button-compact"
+                id="submitEntryButton"
+                type="submit"
+              >
+                Salvar
+              </button>
+              <button class="ghost-button sync-button" hidden id="cancelEditButton" type="button">
+                Cancelar
+              </button>
+            </div>
           </form>
         </article>
 
@@ -378,6 +394,7 @@
           </div>
         </div>
         <div class="entry-actions">
+          <button class="ghost-button entry-edit" type="button">Editar</button>
           <button class="ghost-button danger-button entry-delete" type="button">Excluir</button>
         </div>
       </article>

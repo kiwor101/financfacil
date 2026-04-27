@@ -10,6 +10,7 @@ App web simples e responsivo para controle financeiro pessoal, feito para uso ra
 - Lancamento rapido de receitas e despesas.
 - Compras parceladas aparecendo automaticamente nos proximos meses.
 - Contas fixas mensais com opcao de encerramento.
+- Edicao de lancamentos, contas fixas e parcelamentos.
 - Historico com busca e filtro por tipo.
 - Login com e-mail e senha.
 - Sincronizacao entre celular e PC usando Supabase.

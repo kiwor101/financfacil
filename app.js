@@ -14,18 +14,16 @@ const CLOUD_TABLES = {
 const categories = {
   expense: [
     "Moradia",
-    "Contas",
     "Alimentacao",
     "Transporte",
     "Saude",
     "Lazer",
-    "Compras",
     "Educacao",
-    "Assinaturas",
+    "Cartao de credito",
     "Imprevistos",
     "Outros",
   ],
-  income: ["Salario", "Freela", "Investimentos", "Vendas", "Presente", "Outros"],
+  income: ["Salario", "Freela", "Presentes", "Outros"],
 };
 
 const monthNamesShort = [
@@ -107,6 +105,8 @@ const elements = {
   submitButton: document.querySelector("#submitEntryButton"),
   amountInput: document.querySelector("#amountInput"),
   categoryInput: document.querySelector("#categoryInput"),
+  categoryCustomField: document.querySelector("#categoryCustomField"),
+  categoryCustomInput: document.querySelector("#categoryCustomInput"),
   dateInput: document.querySelector("#dateInput"),
   noteInput: document.querySelector("#noteInput"),
   planTypeInput: document.querySelector("#planTypeInput"),
@@ -120,6 +120,7 @@ const elements = {
   installmentList: document.querySelector("#installmentList"),
   entryList: document.querySelector("#entryList"),
   entryTemplate: document.querySelector("#entryTemplate"),
+  cancelEditButton: document.querySelector("#cancelEditButton"),
   insightStack: document.querySelector("#insightStack"),
   trendBars: document.querySelector("#trendBars"),
 };
@@ -138,6 +139,7 @@ let cloudRefreshTimer = null;
 let cloudReloadPromise = null;
 let entryBusy = false;
 let authBusy = false;
+let editingEntry = null;
 let syncNotice = {
   tone: "muted",
   label: "Modo local",
@@ -181,6 +183,10 @@ function bindEvents() {
   elements.installmentsInput.addEventListener("input", updatePlanModeUI);
   elements.amountInput.addEventListener("input", updatePlanModeUI);
   elements.dateInput.addEventListener("change", updatePlanModeUI);
+  elements.categoryInput.addEventListener("change", updateCustomCategoryUI);
+  elements.cancelEditButton.addEventListener("click", () => {
+    resetEntryForm(elements.dateInput.value || formatDateInput(today));
+  });
 
   elements.entryForm.querySelectorAll('input[name="entryType"]').forEach((input) => {
     input.addEventListener("change", () => {
@@ -618,6 +624,17 @@ async function cancelCloudInstallmentGroup(groupId, fromMonth) {
     .delete()
     .eq("installment_group_id", groupId)
     .gte("date", `${fromMonth}-01`);
+
+  if (error) {
+    throw error;
+  }
+}
+
+async function deleteCloudInstallmentGroup(groupId) {
+  const { error } = await supabaseClient
+    .from(CLOUD_TABLES.transactions)
+    .delete()
+    .eq("installment_group_id", groupId);
 
   if (error) {
     throw error;
@@ -1247,6 +1264,18 @@ function populateCategoryOptions(type) {
     option.textContent = category;
     elements.categoryInput.append(option);
   });
+
+  updateCustomCategoryUI();
+}
+
+function updateCustomCategoryUI() {
+  const isCustom = elements.categoryInput.value === "Outros";
+  elements.categoryCustomField.hidden = !isCustom;
+  elements.categoryCustomInput.required = isCustom;
+
+  if (!isCustom) {
+    elements.categoryCustomInput.value = "";
+  }
 }
 
 function updatePlanModeUI() {
@@ -1295,12 +1324,17 @@ async function handleEntrySubmit(event) {
   const formData = new FormData(elements.entryForm);
   const type = String(formData.get("entryType"));
   const amount = Number.parseFloat(String(formData.get("amount")).replace(",", "."));
-  const category = String(formData.get("category"));
+  const category = getSubmittedCategory(formData);
   const date = String(formData.get("date"));
   const note = String(formData.get("note") || "").trim();
   const planType = String(formData.get("planType"));
 
   if (!amount || amount <= 0 || !category || !date) {
+    return;
+  }
+
+  if (editingEntry) {
+    await handleEntryEditSubmit({ type, amount, category, date, note });
     return;
   }
 
@@ -1356,9 +1390,138 @@ async function handleEntrySubmit(event) {
   }
 }
 
+function getSubmittedCategory(formData) {
+  const category = String(formData.get("category") || "");
+  const customCategory = String(formData.get("categoryCustom") || "").trim();
+
+  if (category === "Outros") {
+    return customCategory || "Outros";
+  }
+
+  return category;
+}
+
+async function handleEntryEditSubmit({ type, amount, category, date, note }) {
+  const edit = editingEntry;
+  if (!edit) {
+    return;
+  }
+
+  try {
+    entryBusy = true;
+    setEntryBusy(true, "Salvando...");
+
+    if (edit.kind === "single") {
+      await updateSingleTransaction(edit.id, { type, amount, category, date, note });
+    } else if (edit.kind === "recurring") {
+      await updateRecurringRule(edit.id, { type, amount, category, date, note });
+    } else if (edit.kind === "installment") {
+      await updateInstallmentGroup(edit.groupId, { type, amount, category, date, note });
+    }
+
+    state.selectedMonth = date.slice(0, 7);
+    saveState();
+    populateYearOptions(Number(date.slice(0, 4)));
+    syncPeriodInputs();
+    resetEntryForm(date);
+    renderApp();
+
+    if (shouldUseCloudPersistence()) {
+      setSyncNotice("Sincronizado", getSyncedMessage(), "success");
+    } else {
+      setLocalModeNotice("Edicao salva neste aparelho.");
+    }
+  } catch (error) {
+    handleCloudError("Nao consegui salvar a edicao.", error);
+  } finally {
+    entryBusy = false;
+    setEntryBusy(false);
+  }
+}
+
+async function updateSingleTransaction(entryId, { type, amount, category, date, note }) {
+  const index = state.transactions.findIndex((entry) => entry.id === entryId);
+  if (index === -1) {
+    return;
+  }
+
+  const updatedEntry = {
+    ...state.transactions[index],
+    type,
+    amount,
+    category,
+    date,
+    note,
+  };
+
+  if (shouldUseCloudPersistence()) {
+    setSyncNotice("Sincronizando", "Atualizando lancamento na nuvem...", "warning");
+    await upsertCloudTransactions([updatedEntry]);
+    lastCloudSyncAt = new Date();
+  }
+
+  state.transactions[index] = updatedEntry;
+}
+
+async function updateRecurringRule(ruleId, { type, amount, category, date, note }) {
+  const index = state.recurringRules.findIndex((rule) => rule.id === ruleId);
+  if (index === -1) {
+    return;
+  }
+
+  const updatedRule = {
+    ...state.recurringRules[index],
+    type,
+    amount,
+    category,
+    startDate: date,
+    note,
+  };
+
+  if (shouldUseCloudPersistence()) {
+    setSyncNotice("Sincronizando", "Atualizando conta fixa na nuvem...", "warning");
+    await upsertCloudRecurringRules([updatedRule]);
+    lastCloudSyncAt = new Date();
+  }
+
+  state.recurringRules[index] = updatedRule;
+}
+
+async function updateInstallmentGroup(groupId, { type, amount, category, date, note }) {
+  const existingEntries = state.transactions.filter((entry) => entry.installmentGroupId === groupId);
+  if (existingEntries.length === 0) {
+    return;
+  }
+
+  const updatedEntries = buildInstallmentEntries({
+    type,
+    amount,
+    category,
+    date,
+    note,
+    groupId,
+  });
+
+  if (shouldUseCloudPersistence()) {
+    setSyncNotice("Sincronizando", "Atualizando parcelamento na nuvem...", "warning");
+    await deleteCloudInstallmentGroup(groupId);
+    await upsertCloudTransactions(updatedEntries);
+    lastCloudSyncAt = new Date();
+  }
+
+  state.transactions = [
+    ...updatedEntries,
+    ...state.transactions.filter((entry) => entry.installmentGroupId !== groupId),
+  ];
+}
+
 function setEntryBusy(isBusy) {
   elements.submitButton.disabled = isBusy;
-  elements.submitButton.textContent = isBusy ? "Salvando..." : "Salvar";
+  elements.submitButton.textContent = isBusy
+    ? "Salvando..."
+    : editingEntry
+      ? "Salvar edicao"
+      : "Salvar";
 }
 
 function buildSingleEntry({ type, amount, category, date, note }) {
@@ -1388,10 +1551,9 @@ function buildRecurringRule({ type, amount, category, date, note }) {
   };
 }
 
-function buildInstallmentEntries({ type, amount, category, date, note }) {
+function buildInstallmentEntries({ type, amount, category, date, note, groupId = crypto.randomUUID() }) {
   const installments = getInstallmentCount();
   const amounts = splitAmountAcrossInstallments(amount, installments);
-  const groupId = crypto.randomUUID();
 
   return amounts.map((installmentAmount, index) => ({
     id: crypto.randomUUID(),
@@ -1407,12 +1569,97 @@ function buildInstallmentEntries({ type, amount, category, date, note }) {
   }));
 }
 
+function startSingleEdit(entry) {
+  editingEntry = { kind: "single", id: entry.id };
+  fillEntryFormForEdit({
+    type: entry.type,
+    amount: entry.amount,
+    category: entry.category,
+    date: entry.date,
+    note: entry.note,
+    planType: "single",
+  });
+}
+
+function startRecurringEdit(ruleId) {
+  const rule = state.recurringRules.find((item) => item.id === ruleId);
+  if (!rule) {
+    return;
+  }
+
+  editingEntry = { kind: "recurring", id: rule.id };
+  fillEntryFormForEdit({
+    type: rule.type,
+    amount: rule.amount,
+    category: rule.category,
+    date: rule.startDate,
+    note: rule.note,
+    planType: "recurring",
+  });
+}
+
+function startInstallmentEdit(groupId) {
+  const entries = state.transactions
+    .filter((entry) => entry.installmentGroupId === groupId)
+    .sort((left, right) => left.date.localeCompare(right.date));
+
+  if (entries.length === 0) {
+    return;
+  }
+
+  const firstEntry = entries[0];
+  editingEntry = { kind: "installment", groupId };
+  fillEntryFormForEdit({
+    type: firstEntry.type,
+    amount: entries.reduce((total, entry) => total + entry.amount, 0),
+    category: firstEntry.category,
+    date: firstEntry.date,
+    note: firstEntry.note,
+    planType: "installment",
+    installments: firstEntry.installmentTotal || entries.length,
+  });
+}
+
+function fillEntryFormForEdit({ type, amount, category, date, note, planType, installments }) {
+  elements.entryForm.querySelector(`input[value="${type}"]`).checked = true;
+  populateCategoryOptions(type);
+  setCategoryValue(category);
+  elements.amountInput.value = formatPlainMoney(amount);
+  elements.dateInput.value = date;
+  elements.noteInput.value = note || "";
+  elements.planTypeInput.value = planType;
+  elements.planTypeInput.disabled = true;
+  elements.installmentsInput.value = String(installments || 2);
+  elements.cancelEditButton.hidden = false;
+  elements.submitButton.textContent = "Salvar edicao";
+  updatePlanModeUI();
+  elements.amountInput.focus();
+}
+
+function setCategoryValue(category) {
+  const availableCategories = Array.from(elements.categoryInput.options).map((option) => option.value);
+
+  if (availableCategories.includes(category)) {
+    elements.categoryInput.value = category;
+    elements.categoryCustomInput.value = "";
+  } else {
+    elements.categoryInput.value = "Outros";
+    elements.categoryCustomInput.value = category;
+  }
+
+  updateCustomCategoryUI();
+}
+
 function resetEntryForm(referenceDate) {
+  editingEntry = null;
   elements.entryForm.reset();
   elements.dateInput.value = referenceDate;
   elements.installmentsInput.value = "2";
   elements.entryForm.querySelector('input[value="expense"]').checked = true;
   elements.planTypeInput.value = "single";
+  elements.planTypeInput.disabled = false;
+  elements.cancelEditButton.hidden = true;
+  elements.submitButton.textContent = "Salvar";
   populateCategoryOptions("expense");
   updatePlanModeUI();
   elements.amountInput.focus();
@@ -1452,7 +1699,7 @@ function renderSummary(initialLoad = false) {
   elements.investmentsInput.value = formatPlainMoney(state.balances.investments);
   elements.balanceHint.textContent =
     currentBalance >= 0
-      ? `Saldo positivo considerando todos os lancamentos ate ${formatMonthLabel(state.selectedMonth)}.`
+      ? `Disponivel apos reserva e investimentos ate ${formatMonthLabel(state.selectedMonth)}.`
       : `Saldo negativo de ${formatCurrency(Math.abs(currentBalance))} ate ${formatMonthLabel(state.selectedMonth)}.`;
 
   if (!initialLoad) {
@@ -1537,6 +1784,9 @@ function renderRecurringList() {
         Ativa desde ${formatMonthLabel(rule.startDate.slice(0, 7))}
       </p>
       <div class="commitment-actions">
+        <button class="ghost-button" data-edit-rule="${rule.id}" type="button">
+          Editar
+        </button>
         <button class="ghost-button danger-button" data-stop-rule="${rule.id}" type="button">
           Encerrar
         </button>
@@ -1548,6 +1798,12 @@ function renderRecurringList() {
   elements.recurringList.querySelectorAll("[data-stop-rule]").forEach((button) => {
     button.addEventListener("click", async () => {
       await stopRecurringRule(button.getAttribute("data-stop-rule"), state.selectedMonth);
+    });
+  });
+
+  elements.recurringList.querySelectorAll("[data-edit-rule]").forEach((button) => {
+    button.addEventListener("click", () => {
+      startRecurringEdit(button.getAttribute("data-edit-rule"));
     });
   });
 }
@@ -1574,6 +1830,9 @@ function renderInstallmentList() {
         ${group.paidCount} paga(s), ${group.remainingCount} restante(s) - proxima em ${formatMonthLabel(group.nextMonth)}
       </p>
       <div class="commitment-actions">
+        <button class="ghost-button" data-edit-group="${group.id}" type="button">
+          Editar
+        </button>
         <button class="ghost-button danger-button" data-cancel-group="${group.id}" type="button">
           Cancelar restantes
         </button>
@@ -1585,6 +1844,12 @@ function renderInstallmentList() {
   elements.installmentList.querySelectorAll("[data-cancel-group]").forEach((button) => {
     button.addEventListener("click", async () => {
       await cancelInstallmentGroup(button.getAttribute("data-cancel-group"), state.selectedMonth);
+    });
+  });
+
+  elements.installmentList.querySelectorAll("[data-edit-group]").forEach((button) => {
+    button.addEventListener("click", () => {
+      startInstallmentEdit(button.getAttribute("data-edit-group"));
     });
   });
 }
@@ -1634,6 +1899,17 @@ function renderEntries() {
     deleteButton.textContent = getDeleteActionLabel(entry);
     deleteButton.addEventListener("click", async () => {
       await handleEntryDelete(entry);
+    });
+
+    const editButton = node.querySelector(".entry-edit");
+    editButton.addEventListener("click", () => {
+      if (entry.source === "recurring") {
+        startRecurringEdit(entry.recurringRuleId);
+      } else if (entry.source === "installment") {
+        startInstallmentEdit(entry.installmentGroupId);
+      } else {
+        startSingleEdit(entry);
+      }
     });
 
     elements.entryList.append(node);
@@ -1803,10 +2079,13 @@ function getTransactionsForMonth(monthString) {
 function getCurrentBalanceThroughMonth(monthString) {
   const directEntries = state.transactions.filter((entry) => entry.date.slice(0, 7) <= monthString);
   const recurringEntries = getGeneratedRecurringTransactionsThroughMonth(monthString);
+  const allocatedBalance = state.balances.emergencyFund + state.balances.investments;
 
-  return [...directEntries, ...recurringEntries].reduce((total, entry) => {
+  const transactionBalance = [...directEntries, ...recurringEntries].reduce((total, entry) => {
     return entry.type === "income" ? total + entry.amount : total - entry.amount;
   }, 0);
+
+  return transactionBalance - allocatedBalance;
 }
 
 function getGeneratedRecurringTransactions(monthString) {
