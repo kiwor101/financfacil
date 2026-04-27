@@ -1700,13 +1700,13 @@ function getInstallmentCount() {
 function renderApp(initialLoad = false) {
   populateYearOptions(Number(state.selectedMonth.slice(0, 4)));
   syncPeriodInputs();
-  renderSummary(initialLoad);
+  renderSummary();
   renderCommitments();
   renderEntries();
   renderTrend();
 }
 
-function renderSummary(initialLoad = false) {
+function renderSummary() {
   const monthEntries = getTransactionsForMonth(state.selectedMonth);
   const income = sumByType(monthEntries, "income");
   const expense = sumByType(monthEntries, "expense");
@@ -1723,14 +1723,6 @@ function renderSummary(initialLoad = false) {
     currentBalance >= 0
       ? `Disponivel apos reserva e investimentos ate ${formatMonthLabel(state.selectedMonth)}.`
       : `Saldo negativo de ${formatCurrency(Math.abs(currentBalance))} ate ${formatMonthLabel(state.selectedMonth)}.`;
-
-  if (!initialLoad) {
-    elements.summaryGrid.classList.remove("pulse");
-    requestAnimationFrame(() => {
-      elements.summaryGrid.classList.add("pulse");
-    });
-    window.setTimeout(() => elements.summaryGrid.classList.remove("pulse"), 450);
-  }
 }
 
 function renderCommitments() {

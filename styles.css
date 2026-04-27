@@ -977,26 +977,10 @@ select {
   animation-delay: 240ms;
 }
 
-.pulse {
-  animation: summaryPulse 420ms ease;
-}
-
 @keyframes revealUp {
   to {
     opacity: 1;
     transform: translateY(0);
-  }
-}
-
-@keyframes summaryPulse {
-  0% {
-    transform: scale(1);
-  }
-  40% {
-    transform: scale(1.015);
-  }
-  100% {
-    transform: scale(1);
   }
 }
 
