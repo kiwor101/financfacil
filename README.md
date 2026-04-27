@@ -12,6 +12,7 @@ App web simples e responsivo para controle financeiro pessoal, feito para uso ra
 - Login com e-mail e senha.
 - Sincronizacao entre celular e PC usando Supabase.
 - Funcionamento como site estatico, ideal para GitHub Pages.
+- Instalacao como PWA no celular.
 
 ## Tecnologias
 
@@ -21,6 +22,7 @@ App web simples e responsivo para controle financeiro pessoal, feito para uso ra
 - Supabase Auth
 - Supabase Database
 - GitHub Pages
+- PWA
 
 ## Como Usar
 
@@ -122,6 +124,38 @@ Nao existe garantia de cair sempre na caixa principal, porque isso depende dos f
 
 Depois de alguns minutos, o app ficara disponivel na URL do GitHub Pages.
 
+## Usando Como App No Celular
+
+O projeto tem suporte a PWA com:
+
+- `manifest.webmanifest`
+- `sw.js`
+- `pwa.js`
+- `icon.svg`
+
+No Android, abra a URL publicada pelo Chrome e use `Adicionar a tela inicial` ou `Instalar app`.
+
+## Publicacao Na Google Play
+
+O caminho mais simples para publicar este projeto na Google Play e empacotar a PWA como um app Android usando Trusted Web Activity.
+
+Fluxo recomendado:
+
+1. Publique o app no GitHub Pages.
+2. Garanta que a PWA esteja funcionando.
+3. Use PWABuilder ou Bubblewrap para gerar o projeto Android.
+4. Gere um Android App Bundle, arquivo `.aab`.
+5. Crie uma conta no Google Play Console.
+6. Envie o `.aab` para revisao.
+
+Pontos importantes:
+
+- A Google Play exige conta de desenvolvedor.
+- O app precisa ser assinado.
+- A publicacao passa por revisao da Google.
+- Para Trusted Web Activity, o dominio precisa ser verificado com Digital Asset Links.
+- Este projeto usa GitHub Pages, entao a URL publicada precisa estar estavel antes de empacotar.
+
 ## Rodando Localmente
 
 Como o projeto e estatico, basta abrir o arquivo `index.html` no navegador.
@@ -137,6 +171,10 @@ Para testar o login do Supabase com redirecionamento, o ideal e usar a versao pu
 +-- styles.css
 +-- app.js
 +-- conta.js
++-- manifest.webmanifest
++-- sw.js
++-- pwa.js
++-- icon.svg
 +-- supabase-config.js
 +-- supabase-setup.sql
 +-- README.md

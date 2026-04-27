@@ -1,0 +1,21 @@
+{
+  "name": "Controle Financeiro",
+  "short_name": "Financas",
+  "description": "Controle financeiro pessoal com entradas, saidas, parcelas e contas fixas.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f5efe3",
+  "theme_color": "#0d8b72",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "./icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["finance", "productivity", "utilities"],
+  "lang": "pt-BR"
+}
