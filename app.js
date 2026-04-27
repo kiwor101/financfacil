@@ -96,7 +96,6 @@ const elements = {
   passwordLoginButton: document.querySelector("#passwordLoginButton"),
   createAccountButton: document.querySelector("#createAccountButton"),
   recoverPasswordButton: document.querySelector("#recoverPasswordButton"),
-  authHelper: document.querySelector("#authHelper"),
   syncFooterMessage: document.querySelector("#syncFooterMessage"),
   summaryGrid: document.querySelector("#summaryGrid"),
   balanceValue: document.querySelector("#balanceValue"),
@@ -268,7 +267,6 @@ function renderAuthUI() {
 
   elements.toggleAuthButton.textContent = getToggleButtonLabel();
   elements.saveConfigButton.textContent = configured ? "Atualizar conexao" : "Salvar conexao";
-  elements.authHelper.textContent = getAuthHelperText();
 
   if (currentUser?.email && elements.authEmailInput.value.trim() !== currentUser.email) {
     elements.authEmailInput.value = currentUser.email;
@@ -285,22 +283,6 @@ function getToggleButtonLabel() {
   }
 
   return hasSupabaseConfig() ? "Login" : "Configurar";
-}
-
-function getAuthHelperText() {
-  if (currentUser) {
-    return "Conta conectada. Use o mesmo e-mail e senha nos outros aparelhos para ver os mesmos dados.";
-  }
-
-  if (hasEmbeddedSupabaseConfig()) {
-    return "Entre com o mesmo e-mail e senha no celular e no computador para sincronizar seus dados.";
-  }
-
-  if (!hasSupabaseConfig()) {
-    return "Cole a URL do projeto e a anon key do Supabase. Nunca use a service role aqui.";
-  }
-
-  return "Com a conexao salva, entre pelo mesmo e-mail no celular e no computador.";
 }
 
 function setSyncNotice(label, message, tone = "muted") {

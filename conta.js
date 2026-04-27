@@ -1,15 +1,6 @@
 const SUPABASE_CONFIG_KEY = "fluxo-leve-supabase-config-v1";
 const AUTH_EMAIL_KEY = "fluxo-leve-auth-email-v1";
 
-const AVATARS = [
-  { id: "kiwi", label: "K", tone: "green" },
-  { id: "fox", label: "F", tone: "orange" },
-  { id: "ocean", label: "O", tone: "blue" },
-  { id: "moon", label: "M", tone: "purple" },
-  { id: "sun", label: "S", tone: "gold" },
-  { id: "leaf", label: "L", tone: "mint" },
-];
-
 const elements = {
   title: document.querySelector("#accountTitle"),
   subtitle: document.querySelector("#accountSubtitle"),
@@ -20,10 +11,8 @@ const elements = {
   profilePasswordInput: document.querySelector("#profilePasswordInput"),
   profilePasswordConfirmInput: document.querySelector("#profilePasswordConfirmInput"),
   profileButton: document.querySelector("#profileButton"),
-  profileAvatarPreview: document.querySelector("#profileAvatarPreview"),
   profileDisplayName: document.querySelector("#profileDisplayName"),
   profileDisplayEmail: document.querySelector("#profileDisplayEmail"),
-  avatarPicker: document.querySelector("#avatarPicker"),
   signupForm: document.querySelector("#signupForm"),
   signupNameInput: document.querySelector("#signupNameInput"),
   signupEmailInput: document.querySelector("#signupEmailInput"),
@@ -45,7 +34,6 @@ const state = {
   busy: false,
   supabaseClient: null,
   currentUser: null,
-  selectedAvatar: "kiwi",
 };
 
 bootstrap();
@@ -92,7 +80,6 @@ function bootstrap() {
     renderMode();
   });
 
-  renderAvatarOptions();
   renderMode();
 }
 
@@ -129,7 +116,6 @@ async function handleSignup(event) {
       options: {
         data: {
           full_name: name,
-          avatar_id: state.selectedAvatar,
         },
         emailRedirectTo: getAppUrl(),
       },
@@ -175,7 +161,6 @@ async function handleProfileSave(event) {
   const updatePayload = {
     data: {
       full_name: fullName,
-      avatar_id: state.selectedAvatar,
     },
   };
 
@@ -284,7 +269,7 @@ function renderMode() {
 
   if (mode === "perfil") {
     elements.title.textContent = "Minha conta";
-    elements.subtitle.textContent = "Atualize seu nome, avatar ou senha.";
+    elements.subtitle.textContent = "Atualize seu nome ou senha.";
     hydrateProfile();
     setMessage("Essas informacoes ficam salvas na sua conta.", "muted");
     return;
@@ -362,25 +347,6 @@ function clearPasswordFields() {
   elements.profilePasswordConfirmInput.value = "";
 }
 
-function renderAvatarOptions() {
-  elements.avatarPicker.innerHTML = "";
-  AVATARS.forEach((avatar) => {
-    const button = document.createElement("button");
-    button.className = "avatar-option";
-    button.type = "button";
-    button.dataset.avatarId = avatar.id;
-    button.dataset.tone = avatar.tone;
-    button.textContent = avatar.label;
-    button.addEventListener("click", () => {
-      state.selectedAvatar = avatar.id;
-      updateAvatarSelection();
-    });
-    elements.avatarPicker.append(button);
-  });
-
-  updateAvatarSelection();
-}
-
 function hydrateProfile() {
   if (!state.currentUser) {
     elements.profileNameInput.value = "";
@@ -393,23 +359,10 @@ function hydrateProfile() {
   const metadata = state.currentUser.user_metadata || {};
   const fullName = String(metadata.full_name || metadata.name || "").trim();
   const email = state.currentUser.email || "";
-  state.selectedAvatar = metadata.avatar_id || state.selectedAvatar || "kiwi";
   elements.profileNameInput.value = fullName;
   elements.profileEmailInput.value = email;
   elements.profileDisplayName.textContent = fullName || email.split("@")[0] || "Minha conta";
   elements.profileDisplayEmail.textContent = email;
-  updateAvatarSelection();
-}
-
-function updateAvatarSelection() {
-  const selected = AVATARS.find((avatar) => avatar.id === state.selectedAvatar) || AVATARS[0];
-  state.selectedAvatar = selected.id;
-  elements.profileAvatarPreview.textContent = selected.label;
-  elements.profileAvatarPreview.dataset.tone = selected.tone;
-
-  elements.avatarPicker.querySelectorAll(".avatar-option").forEach((button) => {
-    button.classList.toggle("active", button.dataset.avatarId === selected.id);
-  });
 }
 
 function getInitialMode() {

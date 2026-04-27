@@ -43,6 +43,9 @@
           <button class="ghost-button sync-button" id="toggleAuthButton" type="button">
             Configurar
           </button>
+          <button class="primary-button primary-button-compact" id="createAccountButton" type="button">
+            Criar conta
+          </button>
           <button
             class="ghost-button sync-button"
             hidden
@@ -78,7 +81,7 @@
           </label>
 
           <label class="field field-wide">
-            <span class="field-label">Seu e-mail</span>
+            <span class="field-label">Login/e-mail</span>
             <input
               autocomplete="email"
               id="authEmailInput"
@@ -93,7 +96,6 @@
               autocomplete="current-password"
               id="authPasswordInput"
               minlength="6"
-              placeholder="Minimo 6 caracteres"
               type="password"
             />
           </label>
@@ -106,17 +108,10 @@
           <button class="primary-button primary-button-compact" id="passwordLoginButton" type="button">
             Entrar
           </button>
-          <button class="ghost-button sync-button" id="createAccountButton" type="button">
-            Criar conta
-          </button>
-          <button class="ghost-button sync-button" id="recoverPasswordButton" type="button">
+          <button class="link-button" id="recoverPasswordButton" type="button">
             Recuperar senha
           </button>
         </div>
-
-        <p class="micro-copy" id="authHelper">
-          Use o mesmo e-mail e senha em todos os aparelhos para sincronizar seus lancamentos.
-        </p>
       </section>
 
       <section class="topbar reveal">
