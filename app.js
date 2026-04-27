@@ -5,6 +5,10 @@ const LEGACY_IMPORT_KEY = "fluxo-leve-legacy-import-v1";
 const LEGACY_CAPTURE_DONE_KEY = "fluxo-leve-legacy-capture-done-v1";
 const CLOUD_REFRESH_INTERVAL_MS = 45000;
 const MAX_INSTALLMENTS = 1200;
+const ALLOCATION_CATEGORIES = {
+  emergencyFund: "Caixa de emergencia",
+  investments: "Investimentos",
+};
 
 const CLOUD_TABLES = {
   transactions: "transactions",
@@ -91,6 +95,7 @@ const elements = {
   createAccountButton: document.querySelector("#createAccountButton"),
   recoverPasswordButton: document.querySelector("#recoverPasswordButton"),
   authHelper: document.querySelector("#authHelper"),
+  syncFooterMessage: document.querySelector("#syncFooterMessage"),
   summaryGrid: document.querySelector("#summaryGrid"),
   balanceValue: document.querySelector("#balanceValue"),
   balanceHint: document.querySelector("#balanceHint"),
@@ -243,8 +248,12 @@ function renderAuthUI() {
   elements.syncPill.dataset.tone = syncNotice.tone;
   elements.syncPill.textContent = syncNotice.label;
   elements.syncMessage.textContent = syncNotice.message;
+  if (elements.syncFooterMessage) {
+    elements.syncFooterMessage.textContent = getFooterSyncText();
+    elements.syncFooterMessage.hidden = !elements.syncFooterMessage.textContent;
+  }
 
-  elements.authPanel.hidden = !authPanelOpen;
+  elements.authPanel.hidden = Boolean(currentUser) || (!authPanelOpen && !configured);
   elements.signOutButton.hidden = !currentUser;
   elements.signOutButton.disabled = authBusy;
   elements.toggleAuthButton.disabled = authBusy;
@@ -278,7 +287,7 @@ function getToggleButtonLabel() {
     return "Conta";
   }
 
-  return hasSupabaseConfig() ? "Conectar" : "Configurar";
+  return hasSupabaseConfig() ? "Login" : "Configurar";
 }
 
 function getAuthHelperText() {
@@ -887,13 +896,24 @@ function stopCloudRefreshTimer() {
 }
 
 function getSyncedMessage() {
-  const email = currentUser?.email || elements.authEmailInput.value.trim();
+  const name = getUserDisplayName();
 
-  if (lastCloudSyncAt) {
-    return `Conectado como ${email}. Ultima atualizacao ${timeFormatter.format(lastCloudSyncAt)}.`;
+  return name ? name : "Conta conectada";
+}
+
+function getUserDisplayName() {
+  const email = currentUser?.email || elements.authEmailInput.value.trim();
+  return email ? email.split("@")[0] : "";
+}
+
+function getFooterSyncText() {
+  if (!currentUser) {
+    return "";
   }
 
-  return `Conectado como ${email}. Seus dados agora podem aparecer nos outros aparelhos.`;
+  return lastCloudSyncAt
+    ? `Ultima atualizacao ${timeFormatter.format(lastCloudSyncAt)}.`
+    : "Sincronizacao pronta.";
 }
 
 function handleCloudError(prefix, error) {
@@ -1187,10 +1207,16 @@ async function handleBalanceSave(balanceType) {
   const input =
     balanceType === "emergencyFund" ? elements.emergencyFundInput : elements.investmentsInput;
   const value = normalizeMoneyValue(String(input.value || "0").replace(",", "."));
+  const previousValue = normalizeMoneyValue(state.balances[balanceType]);
+  const delta = Number((value - previousValue).toFixed(2));
+  const allocationEntry = buildAllocationEntry(balanceType, delta);
 
   state.balances[balanceType] = value;
+  if (allocationEntry) {
+    state.transactions = [allocationEntry, ...state.transactions];
+  }
   saveState();
-  renderSummary();
+  renderApp();
 
   if (!shouldUseCloudPersistence()) {
     setLocalModeNotice("Saldo salvo neste aparelho.");
@@ -1199,12 +1225,43 @@ async function handleBalanceSave(balanceType) {
 
   try {
     setSyncNotice("Sincronizando", "Salvando seus saldos na nuvem...", "warning");
+    if (allocationEntry) {
+      await upsertCloudTransactions([allocationEntry]);
+    }
     await upsertCloudBalances();
     lastCloudSyncAt = new Date();
     setSyncNotice("Sincronizado", getSyncedMessage(), "success");
   } catch (error) {
     handleCloudError("Nao consegui salvar seus saldos.", error);
   }
+}
+
+function buildAllocationEntry(balanceType, delta) {
+  if (!delta) {
+    return null;
+  }
+
+  const category = ALLOCATION_CATEGORIES[balanceType];
+  if (!category) {
+    return null;
+  }
+
+  const isContribution = delta > 0;
+  const label = balanceType === "emergencyFund" ? "caixa de emergencia" : "investimentos";
+
+  return buildSingleEntry({
+    type: isContribution ? "expense" : "income",
+    amount: Math.abs(delta),
+    category,
+    date: getAllocationDate(),
+    note: isContribution ? `Aporte em ${label}` : `Retirada de ${label}`,
+  });
+}
+
+function getAllocationDate() {
+  const [year, month] = state.selectedMonth.split("-").map(Number);
+  const day = Math.min(today.getDate(), getDaysInMonth(year, month));
+  return createDateKeepingDay(year, month, day);
 }
 
 function populateMonthOptions() {
@@ -1732,6 +1789,7 @@ function renderSummary() {
   const currentBalance = getCurrentBalanceThroughMonth(state.selectedMonth);
 
   elements.balanceValue.textContent = formatCurrency(currentBalance);
+  elements.balanceValue.dataset.tone = currentBalance >= 0 ? "positive" : "negative";
   elements.incomeValue.textContent = formatCurrency(income);
   elements.expenseValue.textContent = formatCurrency(expense);
   elements.emergencyFundValue.textContent = formatCurrency(state.balances.emergencyFund);
@@ -1869,6 +1927,10 @@ function renderEntries() {
     node.querySelector(".entry-category").textContent = entry.category;
     const amountNode = node.querySelector(".entry-amount");
     amountNode.dataset.type = entry.type;
+    const allocationKind = getAllocationKind(entry);
+    if (allocationKind) {
+      amountNode.dataset.wallet = allocationKind;
+    }
     amountNode.textContent = `${entry.type === "expense" ? "-" : "+"} ${formatCurrency(entry.amount)}`;
     node.querySelector(".entry-date").textContent = formatEntryDate(entry.date);
     node.querySelector(".entry-note").textContent = entry.note || getFallbackNote(entry);
@@ -1878,7 +1940,11 @@ function renderEntries() {
     typePill.textContent = entry.type === "expense" ? "Saida" : "Entrada";
 
     const planPill = node.querySelector(".entry-plan-pill");
-    if (entry.source === "single") {
+    if (allocationKind) {
+      planPill.hidden = false;
+      planPill.dataset.plan = allocationKind;
+      planPill.textContent = allocationKind === "emergency" ? "Emergencia" : "Investimentos";
+    } else if (entry.source === "single") {
       planPill.hidden = true;
     } else {
       planPill.hidden = false;
@@ -1915,10 +1981,15 @@ function renderTrend() {
       month,
       income: sumByType(entries, "income"),
       expense: sumByType(entries, "expense"),
+      emergency: sumAllocationsByKind(entries, "emergency"),
+      investments: sumAllocationsByKind(entries, "investments"),
     };
   });
 
-  const peakValue = Math.max(1, ...totals.flatMap((item) => [item.income, item.expense]));
+  const peakValue = Math.max(
+    1,
+    ...totals.flatMap((item) => [item.income, item.expense, item.emergency, item.investments]),
+  );
   elements.trendBars.innerHTML = "";
 
   totals.forEach((item) => {
@@ -1926,17 +1997,31 @@ function renderTrend() {
     row.className = "trend-row";
     const incomeWidth = item.income > 0 ? Math.max(4, (item.income / peakValue) * 100) : 0;
     const expenseWidth = item.expense > 0 ? Math.max(4, (item.expense / peakValue) * 100) : 0;
+    const emergencyWidth = item.emergency > 0 ? Math.max(4, (item.emergency / peakValue) * 100) : 0;
+    const investmentsWidth =
+      item.investments > 0 ? Math.max(4, (item.investments / peakValue) * 100) : 0;
 
     row.innerHTML = `
       <span class="trend-label">${formatMonthLabel(item.month)}</span>
       <div class="trend-lines">
         <span class="trend-line income" style="width: ${incomeWidth}%" title="Entradas ${formatCurrency(item.income)}"></span>
         <span class="trend-line expense" style="width: ${expenseWidth}%" title="Saidas ${formatCurrency(item.expense)}"></span>
+        <span class="trend-line emergency" style="width: ${emergencyWidth}%" title="Emergencia ${formatCurrency(item.emergency)}"></span>
+        <span class="trend-line investments" style="width: ${investmentsWidth}%" title="Investimentos ${formatCurrency(item.investments)}"></span>
       </div>
     `;
 
     elements.trendBars.append(row);
   });
+
+  const currentEntries = getTransactionsForMonth(state.selectedMonth);
+  const summary = document.createElement("div");
+  summary.className = "quick-wallet-summary";
+  summary.innerHTML = `
+    <span data-wallet="emergency">Emergencia no mes: ${formatCurrency(sumAllocationsByKind(currentEntries, "emergency"))}</span>
+    <span data-wallet="investments">Investimentos no mes: ${formatCurrency(sumAllocationsByKind(currentEntries, "investments"))}</span>
+  `;
+  elements.trendBars.append(summary);
 }
 
 async function handleEntryDelete(entry) {
@@ -2068,7 +2153,9 @@ function getTransactionsForMonth(monthString) {
 }
 
 function getCurrentBalanceThroughMonth(monthString) {
-  const directEntries = state.transactions.filter((entry) => entry.date.slice(0, 7) <= monthString);
+  const directEntries = state.transactions.filter((entry) => {
+    return entry.date.slice(0, 7) <= monthString && !isAllocationEntry(entry);
+  });
   const recurringEntries = getGeneratedRecurringTransactionsThroughMonth(monthString);
   const allocatedBalance = state.balances.emergencyFund + state.balances.investments;
 
@@ -2208,6 +2295,28 @@ function sumByType(entries, type) {
   return entries
     .filter((entry) => entry.type === type)
     .reduce((total, entry) => total + entry.amount, 0);
+}
+
+function sumAllocationsByKind(entries, kind) {
+  return entries
+    .filter((entry) => getAllocationKind(entry) === kind && entry.type === "expense")
+    .reduce((total, entry) => total + entry.amount, 0);
+}
+
+function isAllocationEntry(entry) {
+  return Boolean(getAllocationKind(entry));
+}
+
+function getAllocationKind(entry) {
+  if (entry.category === ALLOCATION_CATEGORIES.emergencyFund) {
+    return "emergency";
+  }
+
+  if (entry.category === ALLOCATION_CATEGORIES.investments) {
+    return "investments";
+  }
+
+  return "";
 }
 
 function getRollingMonths(count) {

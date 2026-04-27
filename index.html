@@ -19,45 +19,19 @@
     <div class="page-glow page-glow-right" aria-hidden="true"></div>
 
     <main class="app-shell">
-      <section class="topbar reveal">
-        <div class="topbar-copy">
-          <h1>Controle Financeiro</h1>
-        </div>
+      <div class="utility-bar reveal">
+        <button
+          class="ghost-button theme-toggle"
+          id="themeToggleButton"
+          type="button"
+          aria-pressed="false"
+        >
+          <span class="theme-icon" aria-hidden="true">☾</span>
+          <span class="theme-label">Modo dark</span>
+        </button>
+      </div>
 
-        <div class="topbar-controls">
-          <button
-            class="ghost-button theme-toggle"
-            id="themeToggleButton"
-            type="button"
-            aria-pressed="false"
-          >
-            Modo dark
-          </button>
-
-          <div class="period-grid">
-            <label class="field field-inline">
-              <span class="field-label">Mes</span>
-              <select id="monthSelect" name="monthSelect"></select>
-            </label>
-
-            <label class="field field-inline field-year">
-              <span class="field-label">Ano</span>
-              <input
-                id="yearInput"
-                inputmode="numeric"
-                list="yearOptions"
-                name="yearInput"
-                placeholder="Ano"
-                type="text"
-              />
-            </label>
-          </div>
-        </div>
-      </section>
-
-      <datalist id="yearOptions"></datalist>
-
-      <section class="sync-bar reveal" aria-label="Sincronizacao">
+      <section class="sync-bar reveal" aria-label="Conta">
         <div class="sync-status">
           <span class="sync-pill" data-tone="muted" id="syncPill">Modo local</span>
           <p class="sync-message" id="syncMessage">
@@ -144,6 +118,35 @@
           Use o mesmo e-mail e senha em todos os aparelhos para sincronizar seus lancamentos.
         </p>
       </section>
+
+      <section class="topbar reveal">
+        <div class="topbar-copy">
+          <h1>Controle Financeiro</h1>
+        </div>
+
+        <div class="topbar-controls">
+          <div class="period-grid">
+            <label class="field field-inline">
+              <span class="field-label">Mes</span>
+              <select id="monthSelect" name="monthSelect"></select>
+            </label>
+
+            <label class="field field-inline field-year">
+              <span class="field-label">Ano</span>
+              <input
+                id="yearInput"
+                inputmode="numeric"
+                list="yearOptions"
+                name="yearInput"
+                placeholder="Ano"
+                type="text"
+              />
+            </label>
+          </div>
+        </div>
+      </section>
+
+      <datalist id="yearOptions"></datalist>
 
       <section class="summary-grid reveal" id="summaryGrid" aria-label="Resumo financeiro">
         <article class="summary-card summary-card-main tone-balance">
@@ -383,6 +386,7 @@
 
       <footer class="app-footer">
         <span>Copyright &copy; 2026 kiwors.</span>
+        <span class="sync-footer-message" id="syncFooterMessage"></span>
         <span>Controle financeiro simples para o dia a dia.</span>
       </footer>
     </main>
