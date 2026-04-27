@@ -4,7 +4,9 @@ App web simples e responsivo para controle financeiro pessoal, feito para uso ra
 
 ## Funcionalidades
 
-- Resumo mensal com saldo, entradas, saidas e compromissos ativos.
+- Resumo com saldo atual, entradas e saidas do periodo.
+- Saldo atual calculado por todas as entradas e saidas ate o periodo selecionado.
+- Saldos separados para caixa de emergencia e investimentos.
 - Lancamento rapido de receitas e despesas.
 - Compras parceladas aparecendo automaticamente nos proximos meses.
 - Contas fixas mensais com opcao de encerramento.
@@ -44,6 +46,7 @@ Esse script cria as tabelas:
 
 - `transactions`
 - `recurring_rules`
+- `account_balances`
 
 Ele tambem ativa `Row Level Security`, garantindo que cada usuario veja apenas os proprios dados.
 

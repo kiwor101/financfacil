@@ -8,6 +8,7 @@ const CLOUD_REFRESH_INTERVAL_MS = 45000;
 const CLOUD_TABLES = {
   transactions: "transactions",
   recurringRules: "recurring_rules",
+  balances: "account_balances",
 };
 
 const categories = {
@@ -96,8 +97,12 @@ const elements = {
   balanceHint: document.querySelector("#balanceHint"),
   incomeValue: document.querySelector("#incomeValue"),
   expenseValue: document.querySelector("#expenseValue"),
-  commitmentValue: document.querySelector("#commitmentValue"),
-  commitmentHint: document.querySelector("#commitmentHint"),
+  emergencyFundValue: document.querySelector("#emergencyFundValue"),
+  emergencyFundInput: document.querySelector("#emergencyFundInput"),
+  saveEmergencyFundButton: document.querySelector("#saveEmergencyFundButton"),
+  investmentsValue: document.querySelector("#investmentsValue"),
+  investmentsInput: document.querySelector("#investmentsInput"),
+  saveInvestmentsButton: document.querySelector("#saveInvestmentsButton"),
   entryForm: document.querySelector("#entryForm"),
   submitButton: document.querySelector("#submitEntryButton"),
   amountInput: document.querySelector("#amountInput"),
@@ -194,6 +199,12 @@ function bindEvents() {
   elements.createAccountButton.addEventListener("click", () => openAccountPage("criar"));
   elements.recoverPasswordButton.addEventListener("click", () => openAccountPage("recuperar"));
   elements.signOutButton.addEventListener("click", handleSignOut);
+  elements.saveEmergencyFundButton.addEventListener("click", () => {
+    void handleBalanceSave("emergencyFund");
+  });
+  elements.saveInvestmentsButton.addEventListener("click", () => {
+    void handleBalanceSave("investments");
+  });
   elements.authPasswordInput.addEventListener("keydown", (event) => {
     if (event.key === "Enter") {
       event.preventDefault();
@@ -408,6 +419,7 @@ async function loadCloudState({ migrateLegacy = false, quiet = false } = {}) {
 
     let remoteTransactions = await fetchCloudTransactions();
     let remoteRecurringRules = await fetchCloudRecurringRules();
+    const remoteBalances = await fetchCloudBalances();
 
     if (migrateLegacy) {
       const migrated = await migrateLegacyDataToCloud(remoteTransactions, remoteRecurringRules);
@@ -419,6 +431,7 @@ async function loadCloudState({ migrateLegacy = false, quiet = false } = {}) {
 
     state.transactions = remoteTransactions;
     state.recurringRules = remoteRecurringRules;
+    state.balances = remoteBalances;
     saveState();
     renderApp();
 
@@ -535,6 +548,22 @@ async function fetchCloudRecurringRules() {
   return Array.isArray(data) ? data.map(deserializeRecurringRule).filter(Boolean) : [];
 }
 
+async function fetchCloudBalances() {
+  const { data, error } = await supabaseClient
+    .from(CLOUD_TABLES.balances)
+    .select("emergency_fund, investments")
+    .maybeSingle();
+
+  if (error) {
+    throw error;
+  }
+
+  return normalizeBalances({
+    emergencyFund: data?.emergency_fund,
+    investments: data?.investments,
+  });
+}
+
 async function upsertCloudTransactions(entries) {
   const payload = entries.map(serializeTransaction);
   const { error } = await supabaseClient.from(CLOUD_TABLES.transactions).upsert(payload, {
@@ -551,6 +580,24 @@ async function upsertCloudRecurringRules(rules) {
   const { error } = await supabaseClient.from(CLOUD_TABLES.recurringRules).upsert(payload, {
     onConflict: "id",
   });
+
+  if (error) {
+    throw error;
+  }
+}
+
+async function upsertCloudBalances() {
+  const { error } = await supabaseClient.from(CLOUD_TABLES.balances).upsert(
+    {
+      user_id: currentUser.id,
+      emergency_fund: state.balances.emergencyFund,
+      investments: state.balances.investments,
+      updated_at: new Date().toISOString(),
+    },
+    {
+      onConflict: "user_id",
+    },
+  );
 
   if (error) {
     throw error;
@@ -898,6 +945,10 @@ function loadState() {
     selectedMonth: fallbackMonth,
     transactions: [],
     recurringRules: [],
+    balances: {
+      emergencyFund: 0,
+      investments: 0,
+    },
   };
 
   try {
@@ -915,11 +966,24 @@ function loadState() {
       recurringRules: Array.isArray(parsed.recurringRules)
         ? parsed.recurringRules.map(normalizeRecurringRule).filter(Boolean)
         : [],
+      balances: normalizeBalances(parsed.balances),
     };
   } catch (error) {
     console.warn("Nao foi possivel recuperar os dados salvos.", error);
     return fallbackState;
   }
+}
+
+function normalizeBalances(balances) {
+  return {
+    emergencyFund: normalizeMoneyValue(balances?.emergencyFund),
+    investments: normalizeMoneyValue(balances?.investments),
+  };
+}
+
+function normalizeMoneyValue(value) {
+  const numberValue = Number(value);
+  return Number.isFinite(numberValue) && numberValue > 0 ? numberValue : 0;
 }
 
 function saveState() {
@@ -1076,6 +1140,30 @@ function serializeRecurringRule(rule) {
     note: rule.note,
     end_month: rule.endMonth,
   };
+}
+
+async function handleBalanceSave(balanceType) {
+  const input =
+    balanceType === "emergencyFund" ? elements.emergencyFundInput : elements.investmentsInput;
+  const value = normalizeMoneyValue(String(input.value || "0").replace(",", "."));
+
+  state.balances[balanceType] = value;
+  saveState();
+  renderSummary();
+
+  if (!shouldUseCloudPersistence()) {
+    setLocalModeNotice("Saldo salvo neste aparelho.");
+    return;
+  }
+
+  try {
+    setSyncNotice("Sincronizando", "Salvando seus saldos na nuvem...", "warning");
+    await upsertCloudBalances();
+    lastCloudSyncAt = new Date();
+    setSyncNotice("Sincronizado", getSyncedMessage(), "success");
+  } catch (error) {
+    handleCloudError("Nao consegui salvar seus saldos.", error);
+  }
 }
 
 function populateMonthOptions() {
@@ -1353,21 +1441,19 @@ function renderSummary(initialLoad = false) {
   const monthEntries = getTransactionsForMonth(state.selectedMonth);
   const income = sumByType(monthEntries, "income");
   const expense = sumByType(monthEntries, "expense");
-  const balance = income - expense;
-  const commitmentSummary = getCommitmentSummary(state.selectedMonth);
+  const currentBalance = getCurrentBalanceThroughMonth(state.selectedMonth);
 
-  elements.balanceValue.textContent = formatCurrency(balance);
+  elements.balanceValue.textContent = formatCurrency(currentBalance);
   elements.incomeValue.textContent = formatCurrency(income);
   elements.expenseValue.textContent = formatCurrency(expense);
-  elements.commitmentValue.textContent = String(commitmentSummary.totalCount);
+  elements.emergencyFundValue.textContent = formatCurrency(state.balances.emergencyFund);
+  elements.investmentsValue.textContent = formatCurrency(state.balances.investments);
+  elements.emergencyFundInput.value = formatPlainMoney(state.balances.emergencyFund);
+  elements.investmentsInput.value = formatPlainMoney(state.balances.investments);
   elements.balanceHint.textContent =
-    balance >= 0
-      ? `Voce fechou o periodo com ${formatCurrency(balance)} de folga.`
-      : `O periodo esta ${formatCurrency(Math.abs(balance))} no vermelho.`;
-  elements.commitmentHint.textContent =
-    commitmentSummary.totalCount === 0
-      ? "Nenhuma conta fixa ou parcelamento ativo."
-      : `${commitmentSummary.recurringCount} fixa(s) e ${commitmentSummary.installmentCount} parcelamento(s) ativos.`;
+    currentBalance >= 0
+      ? `Saldo positivo considerando todos os lancamentos ate ${formatMonthLabel(state.selectedMonth)}.`
+      : `Saldo negativo de ${formatCurrency(Math.abs(currentBalance))} ate ${formatMonthLabel(state.selectedMonth)}.`;
 
   if (!initialLoad) {
     elements.summaryGrid.classList.remove("pulse");
@@ -1714,6 +1800,15 @@ function getTransactionsForMonth(monthString) {
   return [...directEntries, ...recurringEntries].sort(compareTransactionsDesc);
 }
 
+function getCurrentBalanceThroughMonth(monthString) {
+  const directEntries = state.transactions.filter((entry) => entry.date.slice(0, 7) <= monthString);
+  const recurringEntries = getGeneratedRecurringTransactionsThroughMonth(monthString);
+
+  return [...directEntries, ...recurringEntries].reduce((total, entry) => {
+    return entry.type === "income" ? total + entry.amount : total - entry.amount;
+  }, 0);
+}
+
 function getGeneratedRecurringTransactions(monthString) {
   return getActiveRecurringRules(monthString).map((rule) => {
     const [year, month] = monthString.split("-").map(Number);
@@ -1732,6 +1827,54 @@ function getGeneratedRecurringTransactions(monthString) {
       installmentTotal: null,
     };
   });
+}
+
+function getGeneratedRecurringTransactionsThroughMonth(endMonth) {
+  const generatedEntries = [];
+
+  state.recurringRules.forEach((rule) => {
+    const startMonth = rule.startDate.slice(0, 7);
+    const lastMonth = rule.endMonth && rule.endMonth < endMonth ? rule.endMonth : endMonth;
+
+    if (startMonth > lastMonth) {
+      return;
+    }
+
+    getMonthRange(startMonth, lastMonth).forEach((monthString) => {
+      const [year, month] = monthString.split("-").map(Number);
+      const day = Number(rule.startDate.slice(8, 10));
+      generatedEntries.push({
+        id: `recurring:${rule.id}:${monthString}`,
+        recurringRuleId: rule.id,
+        type: rule.type,
+        amount: rule.amount,
+        category: rule.category,
+        date: createDateKeepingDay(year, month, day),
+        note: rule.note,
+        source: "recurring",
+        installmentGroupId: null,
+        installmentIndex: null,
+        installmentTotal: null,
+      });
+    });
+  });
+
+  return generatedEntries;
+}
+
+function getMonthRange(startMonth, endMonth) {
+  const months = [];
+  const [startYear, startMonthNumber] = startMonth.split("-").map(Number);
+  const [endYear, endMonthNumber] = endMonth.split("-").map(Number);
+  const cursor = new Date(startYear, startMonthNumber - 1, 1);
+  const endDate = new Date(endYear, endMonthNumber - 1, 1);
+
+  while (cursor <= endDate) {
+    months.push(formatMonthInput(cursor));
+    cursor.setMonth(cursor.getMonth() + 1);
+  }
+
+  return months;
 }
 
 function getActiveRecurringRules(monthString) {
@@ -1907,6 +2050,10 @@ function compareRecurringRulesDesc(left, right) {
 
 function formatCurrency(value) {
   return currencyFormatter.format(value || 0);
+}
+
+function formatPlainMoney(value) {
+  return Number(value || 0).toFixed(2);
 }
 
 function formatEntryDate(dateString) {

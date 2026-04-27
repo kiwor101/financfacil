@@ -179,7 +179,7 @@ select {
 
 .summary-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: 1.35fr repeat(4, minmax(0, 1fr));
   gap: 1rem;
   margin: 1rem 0;
 }
@@ -365,6 +365,20 @@ select {
   min-height: 7.6rem;
 }
 
+.summary-card-main {
+  min-height: 8.2rem;
+}
+
+.summary-card-subtle {
+  min-height: 6.5rem;
+  padding: 0.85rem;
+}
+
+.summary-card-wallet {
+  min-height: 7.2rem;
+  padding: 0.85rem;
+}
+
 .summary-card::after {
   content: "";
   position: absolute;
@@ -383,14 +397,49 @@ select {
 .summary-value {
   display: block;
   margin-top: 0.65rem;
-  font-size: clamp(1.45rem, 2.7vw, 2.2rem);
-  letter-spacing: -0.05em;
+  font-size: 1.85rem;
+  letter-spacing: 0;
   font-family: var(--headline);
+}
+
+.summary-card-main .summary-value {
+  font-size: 2.15rem;
+}
+
+.summary-card-subtle .summary-value,
+.summary-card-wallet .summary-value {
+  font-size: 1.16rem;
 }
 
 .summary-footnote {
   max-width: 26ch;
   font-size: 0.84rem;
+}
+
+.summary-card-subtle .summary-footnote {
+  font-size: 0.75rem;
+}
+
+.balance-editor {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.35rem;
+  margin-top: 0.65rem;
+}
+
+.balance-editor input {
+  width: 100%;
+  min-height: 2rem;
+  padding: 0.42rem 0.55rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(36, 54, 46, 0.12);
+  background: rgba(255, 255, 255, 0.72);
+  color: var(--ink);
+}
+
+.balance-save {
+  padding: 0.42rem 0.62rem;
+  font-size: 0.78rem;
 }
 
 .tone-balance {
@@ -407,6 +456,14 @@ select {
 
 .tone-commitment {
   background: linear-gradient(160deg, rgba(52, 95, 184, 0.15), rgba(252, 252, 255, 0.9));
+}
+
+.tone-emergency {
+  background: linear-gradient(160deg, rgba(214, 150, 52, 0.14), rgba(255, 253, 246, 0.88));
+}
+
+.tone-investments {
+  background: linear-gradient(160deg, rgba(52, 95, 184, 0.13), rgba(248, 251, 255, 0.9));
 }
 
 .content-grid {
@@ -866,6 +923,10 @@ select {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .summary-card-main {
+    grid-column: 1 / -1;
+  }
+
   .topbar-controls {
     justify-content: flex-start;
   }
@@ -930,6 +991,14 @@ select {
     min-height: 6.9rem;
   }
 
+  .summary-card-main {
+    min-height: 7.2rem;
+  }
+
+  .summary-card-subtle {
+    min-height: 5.8rem;
+  }
+
   .summary-card::after {
     width: 4.8rem;
     height: 4.8rem;
@@ -937,6 +1006,15 @@ select {
 
   .summary-value {
     font-size: 1.25rem;
+  }
+
+  .summary-card-main .summary-value {
+    font-size: 1.72rem;
+  }
+
+  .summary-card-subtle .summary-value,
+  .summary-card-wallet .summary-value {
+    font-size: 1.05rem;
   }
 
   .summary-footnote,

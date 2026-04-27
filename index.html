@@ -137,30 +137,60 @@
       </section>
 
       <section class="summary-grid reveal" id="summaryGrid" aria-label="Resumo financeiro">
-        <article class="summary-card tone-balance">
-          <span class="summary-label">Saldo do mes</span>
+        <article class="summary-card summary-card-main tone-balance">
+          <span class="summary-label">Saldo atual</span>
           <strong class="summary-value" id="balanceValue">R$ 0,00</strong>
-          <span class="summary-footnote" id="balanceHint">Sem lancamentos ainda.</span>
+          <span class="summary-footnote" id="balanceHint">
+            Entradas menos saidas ate o periodo selecionado.
+          </span>
         </article>
 
-        <article class="summary-card tone-income">
+        <article class="summary-card summary-card-subtle tone-income">
           <span class="summary-label">Entradas</span>
           <strong class="summary-value" id="incomeValue">R$ 0,00</strong>
-          <span class="summary-footnote">Tudo o que entrou no periodo.</span>
+          <span class="summary-footnote">No periodo.</span>
         </article>
 
-        <article class="summary-card tone-expense">
+        <article class="summary-card summary-card-subtle tone-expense">
           <span class="summary-label">Saidas</span>
           <strong class="summary-value" id="expenseValue">R$ 0,00</strong>
-          <span class="summary-footnote">Tudo o que saiu no periodo.</span>
+          <span class="summary-footnote">No periodo.</span>
         </article>
 
-        <article class="summary-card tone-commitment">
-          <span class="summary-label">Compromissos ativos</span>
-          <strong class="summary-value" id="commitmentValue">0</strong>
-          <span class="summary-footnote" id="commitmentHint">
-            Nenhuma conta fixa ou parcelamento ativo.
-          </span>
+        <article class="summary-card summary-card-wallet tone-emergency">
+          <span class="summary-label">Caixa de emergencia</span>
+          <strong class="summary-value" id="emergencyFundValue">R$ 0,00</strong>
+          <div class="balance-editor">
+            <input
+              id="emergencyFundInput"
+              inputmode="decimal"
+              min="0"
+              placeholder="0,00"
+              step="0.01"
+              type="number"
+            />
+            <button class="ghost-button balance-save" id="saveEmergencyFundButton" type="button">
+              Salvar
+            </button>
+          </div>
+        </article>
+
+        <article class="summary-card summary-card-wallet tone-investments">
+          <span class="summary-label">Investimentos</span>
+          <strong class="summary-value" id="investmentsValue">R$ 0,00</strong>
+          <div class="balance-editor">
+            <input
+              id="investmentsInput"
+              inputmode="decimal"
+              min="0"
+              placeholder="0,00"
+              step="0.01"
+              type="number"
+            />
+            <button class="ghost-button balance-save" id="saveInvestmentsButton" type="button">
+              Salvar
+            </button>
+          </div>
         </article>
       </section>
 
