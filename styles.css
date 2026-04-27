@@ -263,6 +263,100 @@ select {
   font-size: 0.82rem;
 }
 
+.account-shell {
+  position: relative;
+  z-index: 1;
+  width: min(100% - 1.2rem, 520px);
+  min-height: 100vh;
+  margin: 0 auto;
+  padding: 1.2rem 0;
+  display: grid;
+  align-items: center;
+}
+
+.account-card {
+  border: 1px solid var(--surface-border);
+  background: var(--surface);
+  backdrop-filter: blur(16px);
+  box-shadow: var(--shadow);
+  border-radius: var(--radius-lg);
+  padding: 1rem;
+}
+
+.account-back {
+  display: inline-flex;
+  margin-bottom: 1rem;
+  color: var(--accent-strong);
+  font-size: 0.9rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.account-heading h1 {
+  margin: 0;
+  font-family: var(--headline);
+  font-size: 1.55rem;
+  letter-spacing: 0;
+}
+
+.account-heading p {
+  margin: 0.45rem 0 0;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.account-tabs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.45rem;
+  margin: 1rem 0;
+}
+
+.account-tab {
+  min-height: 2.35rem;
+  border: 1px solid rgba(36, 54, 46, 0.1);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.68);
+  color: var(--muted);
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.account-tab.active {
+  background: linear-gradient(135deg, rgba(13, 139, 114, 0.17), rgba(255, 255, 255, 0.85));
+  border-color: rgba(13, 139, 114, 0.22);
+  color: var(--accent-strong);
+}
+
+.account-form {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.account-primary {
+  width: 100%;
+  margin-top: 0.25rem;
+}
+
+.account-message {
+  margin: 0.85rem 0 0;
+  padding: 0.72rem 0.8rem;
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.62);
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.account-message[data-tone="success"] {
+  background: rgba(27, 143, 101, 0.12);
+  color: var(--income);
+}
+
+.account-message[data-tone="error"] {
+  background: rgba(180, 68, 68, 0.12);
+  color: var(--danger);
+}
+
 .summary-card {
   position: relative;
   overflow: hidden;

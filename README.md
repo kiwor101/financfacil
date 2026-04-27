@@ -27,7 +27,7 @@ App web simples e responsivo para controle financeiro pessoal, feito para uso ra
 Depois de publicado, abra o link do app no celular ou no computador.
 
 1. Clique em `Conectar`.
-2. Crie uma conta com e-mail e senha.
+2. Clique em `Criar conta`.
 3. Confirme o e-mail, se o Supabase solicitar.
 4. Entre com o mesmo e-mail e senha nos outros dispositivos.
 5. Cadastre seus lancamentos normalmente.
@@ -88,6 +88,28 @@ Para este projeto no GitHub Pages, o formato esperado e:
 https://kiwor101.github.io/financfacil/
 ```
 
+Adicione tambem a pagina de conta nas URLs permitidas:
+
+```text
+https://kiwor101.github.io/financfacil/conta.html
+```
+
+Essa pagina e usada para criar conta, recuperar senha e definir uma nova senha.
+
+## Entrega De E-mails
+
+O Supabase envia e-mails de confirmacao e recuperacao de senha. Em projetos reais, configure um SMTP proprio para melhorar a entrega e reduzir a chance de cair no spam.
+
+Boas praticas:
+
+- usar um provedor de e-mail transacional
+- configurar SPF, DKIM e DMARC no dominio de envio
+- usar um remetente proprio, como `no-reply@seudominio.com`
+- evitar textos promocionais nos e-mails de autenticacao
+- configurar um dominio customizado no Supabase quando possivel
+
+Nao existe garantia de cair sempre na caixa principal, porque isso depende dos filtros do provedor de e-mail do usuario, mas essas configuracoes melhoram bastante a reputacao do envio.
+
 ## Publicacao No GitHub Pages
 
 1. Envie os arquivos para um repositorio no GitHub.
@@ -111,8 +133,10 @@ Para testar o login do Supabase com redirecionamento, o ideal e usar a versao pu
 ```text
 .
 +-- index.html
++-- conta.html
 +-- styles.css
 +-- app.js
++-- conta.js
 +-- supabase-config.js
 +-- supabase-setup.sql
 +-- README.md

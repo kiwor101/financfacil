@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Conta | Controle financeiro</title>
+    <meta
+      name="description"
+      content="Crie sua conta ou recupere a senha do Controle Financeiro."
+    />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="page-glow page-glow-left" aria-hidden="true"></div>
+    <div class="page-glow page-glow-right" aria-hidden="true"></div>
+
+    <main class="account-shell">
+      <section class="account-card reveal">
+        <a class="account-back" href="./index.html">Voltar para o app</a>
+
+        <div class="account-heading">
+          <h1 id="accountTitle">Criar conta</h1>
+          <p id="accountSubtitle">
+            Use um e-mail e senha para acessar seus dados no celular e no computador.
+          </p>
+        </div>
+
+        <div class="account-tabs" aria-label="Acoes da conta">
+          <button class="account-tab" data-mode="criar" type="button">Criar conta</button>
+          <button class="account-tab" data-mode="recuperar" type="button">Recuperar senha</button>
+        </div>
+
+        <form class="account-form" id="signupForm">
+          <label class="field">
+            <span class="field-label">Nome</span>
+            <input
+              autocomplete="name"
+              id="signupNameInput"
+              maxlength="80"
+              placeholder="Seu nome"
+              type="text"
+            />
+          </label>
+
+          <label class="field">
+            <span class="field-label">E-mail</span>
+            <input
+              autocomplete="email"
+              id="signupEmailInput"
+              placeholder="voce@exemplo.com"
+              required
+              type="email"
+            />
+          </label>
+
+          <label class="field">
+            <span class="field-label">Senha</span>
+            <input
+              autocomplete="new-password"
+              id="signupPasswordInput"
+              minlength="6"
+              placeholder="Minimo 6 caracteres"
+              required
+              type="password"
+            />
+          </label>
+
+          <label class="field">
+            <span class="field-label">Confirmar senha</span>
+            <input
+              autocomplete="new-password"
+              id="signupPasswordConfirmInput"
+              minlength="6"
+              placeholder="Repita a senha"
+              required
+              type="password"
+            />
+          </label>
+
+          <button class="primary-button account-primary" id="signupButton" type="submit">
+            Criar conta
+          </button>
+        </form>
+
+        <form class="account-form" hidden id="recoveryForm">
+          <label class="field">
+            <span class="field-label">E-mail</span>
+            <input
+              autocomplete="email"
+              id="recoveryEmailInput"
+              placeholder="voce@exemplo.com"
+              required
+              type="email"
+            />
+          </label>
+
+          <button class="primary-button account-primary" id="recoveryButton" type="submit">
+            Enviar recuperacao
+          </button>
+        </form>
+
+        <form class="account-form" hidden id="newPasswordForm">
+          <label class="field">
+            <span class="field-label">Nova senha</span>
+            <input
+              autocomplete="new-password"
+              id="newPasswordInput"
+              minlength="6"
+              placeholder="Minimo 6 caracteres"
+              required
+              type="password"
+            />
+          </label>
+
+          <label class="field">
+            <span class="field-label">Confirmar nova senha</span>
+            <input
+              autocomplete="new-password"
+              id="newPasswordConfirmInput"
+              minlength="6"
+              placeholder="Repita a nova senha"
+              required
+              type="password"
+            />
+          </label>
+
+          <button class="primary-button account-primary" id="newPasswordButton" type="submit">
+            Salvar nova senha
+          </button>
+        </form>
+
+        <p class="account-message" data-tone="muted" id="accountMessage">
+          Se ja tiver conta, volte para o app e entre com e-mail e senha.
+        </p>
+      </section>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="./supabase-config.js"></script>
+    <script src="./conta.js"></script>
+  </body>
+</html>

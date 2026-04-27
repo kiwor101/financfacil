@@ -89,7 +89,7 @@ const elements = {
   saveConfigButton: document.querySelector("#saveConfigButton"),
   passwordLoginButton: document.querySelector("#passwordLoginButton"),
   createAccountButton: document.querySelector("#createAccountButton"),
-  magicLinkButton: document.querySelector("#magicLinkButton"),
+  recoverPasswordButton: document.querySelector("#recoverPasswordButton"),
   authHelper: document.querySelector("#authHelper"),
   summaryGrid: document.querySelector("#summaryGrid"),
   balanceValue: document.querySelector("#balanceValue"),
@@ -191,8 +191,8 @@ function bindEvents() {
 
   elements.saveConfigButton.addEventListener("click", handleSaveConfig);
   elements.passwordLoginButton.addEventListener("click", handlePasswordLogin);
-  elements.createAccountButton.addEventListener("click", handleCreateAccount);
-  elements.magicLinkButton.addEventListener("click", handleSendMagicLink);
+  elements.createAccountButton.addEventListener("click", () => openAccountPage("criar"));
+  elements.recoverPasswordButton.addEventListener("click", () => openAccountPage("recuperar"));
   elements.signOutButton.addEventListener("click", handleSignOut);
   elements.authPasswordInput.addEventListener("keydown", (event) => {
     if (event.key === "Enter") {
@@ -237,8 +237,8 @@ function renderAuthUI() {
   elements.passwordLoginButton.hidden = Boolean(currentUser);
   elements.createAccountButton.disabled = authBusy || !configured;
   elements.createAccountButton.hidden = Boolean(currentUser);
-  elements.magicLinkButton.disabled = authBusy || !configured;
-  elements.magicLinkButton.hidden = Boolean(currentUser);
+  elements.recoverPasswordButton.disabled = authBusy || !configured;
+  elements.recoverPasswordButton.hidden = Boolean(currentUser);
   elements.cloudConfigFields.forEach((field) => {
     field.hidden = embeddedConfig;
   });
@@ -679,116 +679,6 @@ async function handlePasswordLogin() {
   }
 }
 
-async function handleCreateAccount() {
-  if (authBusy) {
-    return;
-  }
-
-  const credentials = readAuthCredentials();
-  const config = readSupabaseConfigInputs();
-
-  if (!validatePasswordCredentials(credentials, config)) {
-    return;
-  }
-
-  try {
-    setAuthBusy(true, "Criando...");
-    await ensureSupabaseReady(config);
-
-    const options = {};
-    const redirectTo = getAuthRedirectUrl();
-    if (redirectTo) {
-      options.emailRedirectTo = redirectTo;
-    }
-
-    const { data, error } = await supabaseClient.auth.signUp({
-      email: credentials.email,
-      password: credentials.password,
-      options,
-    });
-
-    if (error) {
-      throw error;
-    }
-
-    localStorage.setItem(AUTH_EMAIL_KEY, credentials.email);
-
-    if (data.session?.user) {
-      elements.authPasswordInput.value = "";
-      authPanelOpen = false;
-      await handleSignedInSession(data.session, { reload: true });
-      return;
-    }
-
-    setSyncNotice(
-      "Conta criada",
-      "Confira seu e-mail para confirmar a conta. Depois volte aqui e entre com sua senha.",
-      "success",
-    );
-  } catch (error) {
-    handleCloudError("Nao consegui criar a conta.", error);
-  } finally {
-    setAuthBusy(false);
-  }
-}
-
-async function handleSendMagicLink() {
-  if (authBusy) {
-    return;
-  }
-
-  const email = elements.authEmailInput.value.trim().toLowerCase();
-  const config = readSupabaseConfigInputs();
-
-  if (!email) {
-    authPanelOpen = true;
-    setSyncNotice("Atencao", "Digite o e-mail que voce vai usar nos outros aparelhos.", "warning");
-    return;
-  }
-
-  if (!hasSupabaseConfig(config)) {
-    authPanelOpen = true;
-    setSyncNotice(
-      "Atencao",
-      "Salve primeiro a URL do projeto e a chave publica do Supabase.",
-      "warning",
-    );
-    return;
-  }
-
-  try {
-    setAuthBusy(true, "Enviando...");
-    await ensureSupabaseReady(config);
-
-    const options = {};
-    const redirectTo = getAuthRedirectUrl();
-    if (redirectTo) {
-      options.emailRedirectTo = redirectTo;
-    }
-
-    const { error } = await supabaseClient.auth.signInWithOtp({
-      email,
-      options,
-    });
-
-    if (error) {
-      throw error;
-    }
-
-    localStorage.setItem(AUTH_EMAIL_KEY, email);
-    authPanelOpen = false;
-    setSyncNotice(
-      "Link enviado",
-      "Abra o e-mail neste aparelho para concluir a entrada.",
-      "success",
-    );
-  } catch (error) {
-    handleCloudError("Nao consegui enviar o link de acesso.", error);
-  } finally {
-    setAuthBusy(false);
-  }
-}
-
 async function handleSignOut() {
   if (authBusy || !supabaseClient) {
     return;
@@ -819,12 +709,21 @@ function setAuthBusy(isBusy, primaryLabel) {
   elements.saveConfigButton.disabled = isBusy;
   elements.passwordLoginButton.disabled = isBusy || !hasSupabaseConfig(readSupabaseConfigInputs());
   elements.createAccountButton.disabled = isBusy || !hasSupabaseConfig(readSupabaseConfigInputs());
-  elements.magicLinkButton.disabled = isBusy || !hasSupabaseConfig(readSupabaseConfigInputs());
+  elements.recoverPasswordButton.disabled = isBusy || !hasSupabaseConfig(readSupabaseConfigInputs());
   elements.signOutButton.disabled = isBusy;
   elements.toggleAuthButton.disabled = isBusy;
   elements.passwordLoginButton.textContent = isBusy ? primaryLabel : "Entrar";
-  elements.magicLinkButton.textContent = "Link por e-mail";
   renderAuthUI();
+}
+
+function openAccountPage(mode) {
+  const email = encodeURIComponent(elements.authEmailInput.value.trim());
+  const params = new URLSearchParams({ modo: mode });
+  if (email) {
+    params.set("email", email);
+  }
+
+  window.location.href = `./conta.html?${params.toString()}`;
 }
 
 async function ensureSupabaseReady(config) {
