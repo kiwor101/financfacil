@@ -121,9 +121,6 @@ const elements = {
   entryList: document.querySelector("#entryList"),
   entryTemplate: document.querySelector("#entryTemplate"),
   cancelEditButton: document.querySelector("#cancelEditButton"),
-  chartMetricInputs: document.querySelectorAll('input[name="chartMetric"]'),
-  pieChart: document.querySelector("#pieChart"),
-  pieLegend: document.querySelector("#pieLegend"),
   trendBars: document.querySelector("#trendBars"),
 };
 
@@ -186,9 +183,6 @@ function bindEvents() {
   elements.amountInput.addEventListener("input", updatePlanModeUI);
   elements.dateInput.addEventListener("change", updatePlanModeUI);
   elements.categoryInput.addEventListener("change", updateCustomCategoryUI);
-  elements.chartMetricInputs.forEach((input) => {
-    input.addEventListener("change", renderInsights);
-  });
   elements.cancelEditButton.addEventListener("click", () => {
     resetEntryForm(elements.dateInput.value || formatDateInput(today));
   });
@@ -1683,7 +1677,6 @@ function renderApp(initialLoad = false) {
   populateYearOptions(Number(state.selectedMonth.slice(0, 4)));
   syncPeriodInputs();
   renderSummary(initialLoad);
-  renderInsights();
   renderCommitments();
   renderEntries();
   renderTrend();
@@ -1714,146 +1707,6 @@ function renderSummary(initialLoad = false) {
     });
     window.setTimeout(() => elements.summaryGrid.classList.remove("pulse"), 450);
   }
-}
-
-function renderInsights() {
-  const monthEntries = getTransactionsForMonth(state.selectedMonth);
-  const selectedMetrics = getSelectedChartMetrics();
-  const slices = buildPieSlices(monthEntries, selectedMetrics);
-  renderPieChart(slices);
-}
-
-function getSelectedChartMetrics() {
-  const selected = Array.from(elements.chartMetricInputs)
-    .filter((input) => input.checked)
-    .map((input) => input.value);
-
-  if (selected.length === 0) {
-    elements.chartMetricInputs.forEach((input) => {
-      if (input.value === "expenses") {
-        input.checked = true;
-      }
-    });
-    return ["expenses"];
-  }
-
-  return selected;
-}
-
-function buildPieSlices(monthEntries, selectedMetrics) {
-  const slices = [];
-
-  if (selectedMetrics.includes("expenses")) {
-    slices.push(...buildCategorySlices(monthEntries, "expense", "Saida"));
-  }
-
-  if (selectedMetrics.includes("income")) {
-    slices.push(...buildCategorySlices(monthEntries, "income", "Entrada"));
-  }
-
-  if (selectedMetrics.includes("commitments")) {
-    const recurringAmount = monthEntries
-      .filter((entry) => entry.source === "recurring")
-      .reduce((total, entry) => total + entry.amount, 0);
-    const installmentAmount = monthEntries
-      .filter((entry) => entry.source === "installment")
-      .reduce((total, entry) => total + entry.amount, 0);
-
-    if (recurringAmount > 0) {
-      slices.push({ label: "Fixas", amount: recurringAmount, tone: "commitment" });
-    }
-
-    if (installmentAmount > 0) {
-      slices.push({ label: "Parcelas", amount: installmentAmount, tone: "installment" });
-    }
-  }
-
-  if (selectedMetrics.includes("allocated")) {
-    if (state.balances.emergencyFund > 0) {
-      slices.push({
-        label: "Emergencia",
-        amount: state.balances.emergencyFund,
-        tone: "emergency",
-      });
-    }
-
-    if (state.balances.investments > 0) {
-      slices.push({
-        label: "Investimentos",
-        amount: state.balances.investments,
-        tone: "investment",
-      });
-    }
-  }
-
-  return slices.sort((left, right) => right.amount - left.amount).slice(0, 8);
-}
-
-function buildCategorySlices(entries, type, prefix) {
-  const totals = entries
-    .filter((entry) => entry.type === type)
-    .reduce((accumulator, entry) => {
-      accumulator[entry.category] = (accumulator[entry.category] || 0) + entry.amount;
-      return accumulator;
-    }, {});
-
-  return Object.entries(totals).map(([category, amount]) => ({
-    label: `${prefix}: ${category}`,
-    amount,
-    tone: type,
-  }));
-}
-
-function renderPieChart(slices) {
-  if (slices.length === 0) {
-    elements.pieChart.style.background = "";
-    elements.pieChart.classList.add("empty");
-    elements.pieChart.innerHTML = "<span>Sem dados</span>";
-    elements.pieLegend.innerHTML =
-      '<div class="empty-state chart-empty">Nenhum valor para as opcoes marcadas neste periodo.</div>';
-    return;
-  }
-
-  const total = slices.reduce((sum, slice) => sum + slice.amount, 0);
-  const colors = slices.map((slice, index) => getPieColor(slice.tone, index));
-  let cursor = 0;
-  const gradientStops = slices.map((slice, index) => {
-    const start = cursor;
-    const size = (slice.amount / total) * 100;
-    cursor += size;
-    return `${colors[index]} ${start}% ${cursor}%`;
-  });
-
-  elements.pieChart.classList.remove("empty");
-  elements.pieChart.innerHTML = `<span>${formatCurrency(total)}</span>`;
-  elements.pieChart.style.background = `conic-gradient(${gradientStops.join(", ")})`;
-  elements.pieLegend.innerHTML = "";
-
-  slices.forEach((slice, index) => {
-    const percent = total > 0 ? Math.round((slice.amount / total) * 100) : 0;
-    const item = document.createElement("div");
-    item.className = "pie-legend-item";
-    item.innerHTML = `
-      <span class="pie-dot" style="background: ${colors[index]}"></span>
-      <span class="pie-label">${escapeHtml(slice.label)}</span>
-      <strong>${formatCurrency(slice.amount)}</strong>
-      <small>${percent}%</small>
-    `;
-    elements.pieLegend.append(item);
-  });
-}
-
-function getPieColor(tone, index) {
-  const palettes = {
-    expense: ["#cc6342", "#d98a64", "#b94f38", "#e0a077"],
-    income: ["#1b8f65", "#53b58d", "#0d8b72", "#87c9ad"],
-    commitment: ["#345fb8"],
-    installment: ["#7089d6"],
-    emergency: ["#d69634"],
-    investment: ["#3d7ecf"],
-  };
-  const colors = palettes[tone] || ["#61726c", "#8a9a94"];
-  return colors[index % colors.length];
 }
 
 function renderCommitments() {
