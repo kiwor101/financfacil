@@ -358,7 +358,7 @@ async function initializeSupabaseClient(config) {
         return;
       }
 
-      handleSignedOutSession();
+      handleSignedOutSession({ preserveLegacyImport: event !== "SIGNED_OUT" });
     }, 0);
   });
 
@@ -375,7 +375,7 @@ async function initializeSupabaseClient(config) {
       return;
     }
 
-    handleSignedOutSession();
+    handleSignedOutSession({ preserveLegacyImport: true });
   } catch (error) {
     handleCloudError("Nao consegui validar a conexao com o Supabase.", error);
   }
@@ -400,12 +400,44 @@ async function handleSignedInSession(session, options = {}) {
   setSyncNotice("Sincronizado", getSyncedMessage(), "success");
 }
 
-function handleSignedOutSession() {
+function handleSignedOutSession({ preserveLegacyImport = false } = {}) {
   currentSession = null;
   currentUser = null;
   lastCloudSyncAt = null;
   stopCloudRefreshTimer();
+  localStorage.removeItem(AUTH_EMAIL_KEY);
+  elements.authPasswordInput.value = "";
+  clearLocalFinancialData({ preserveLegacyImport });
   setLocalModeNotice();
+}
+
+function createEmptyState(selectedMonth = formatMonthInput(today)) {
+  return {
+    selectedMonth,
+    transactions: [],
+    recurringRules: [],
+    balances: {
+      emergencyFund: 0,
+      investments: 0,
+    },
+  };
+}
+
+function clearLocalFinancialData({ preserveLegacyImport = false } = {}) {
+  const selectedMonth = state.selectedMonth || formatMonthInput(today);
+  const emptyState = createEmptyState(selectedMonth);
+
+  state.selectedMonth = emptyState.selectedMonth;
+  state.transactions = emptyState.transactions;
+  state.recurringRules = emptyState.recurringRules;
+  state.balances = emptyState.balances;
+
+  if (!preserveLegacyImport) {
+    localStorage.removeItem(LEGACY_IMPORT_KEY);
+  }
+
+  saveState();
+  renderApp();
 }
 
 async function loadCloudState({ migrateLegacy = false, quiet = false } = {}) {
@@ -754,7 +786,7 @@ async function handleSignOut() {
       throw error;
     }
 
-    handleSignedOutSession();
+    handleSignedOutSession({ preserveLegacyImport: false });
     setSyncNotice(
       "Conta desconectada",
       "Os dados continuam na nuvem. Entre de novo para editar e sincronizar.",
@@ -957,15 +989,7 @@ function getAuthRedirectUrl() {
 
 function loadState() {
   const fallbackMonth = formatMonthInput(today);
-  const fallbackState = {
-    selectedMonth: fallbackMonth,
-    transactions: [],
-    recurringRules: [],
-    balances: {
-      emergencyFund: 0,
-      investments: 0,
-    },
-  };
+  const fallbackState = createEmptyState(fallbackMonth);
 
   try {
     const rawState = localStorage.getItem(STORAGE_KEY);
