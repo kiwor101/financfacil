@@ -26,6 +26,8 @@ const categories = {
     "Educacao",
     "Cartao de credito",
     "Imprevistos",
+    ALLOCATION_CATEGORIES.emergencyFund,
+    ALLOCATION_CATEGORIES.investments,
     "Outros",
   ],
   income: ["Salario", "Freela", "Presentes", "Outros"],
@@ -102,11 +104,7 @@ const elements = {
   incomeValue: document.querySelector("#incomeValue"),
   expenseValue: document.querySelector("#expenseValue"),
   emergencyFundValue: document.querySelector("#emergencyFundValue"),
-  emergencyFundInput: document.querySelector("#emergencyFundInput"),
-  saveEmergencyFundButton: document.querySelector("#saveEmergencyFundButton"),
   investmentsValue: document.querySelector("#investmentsValue"),
-  investmentsInput: document.querySelector("#investmentsInput"),
-  saveInvestmentsButton: document.querySelector("#saveInvestmentsButton"),
   entryForm: document.querySelector("#entryForm"),
   submitButton: document.querySelector("#submitEntryButton"),
   amountInput: document.querySelector("#amountInput"),
@@ -201,6 +199,11 @@ function bindEvents() {
   });
 
   elements.toggleAuthButton.addEventListener("click", () => {
+    if (currentUser) {
+      openAccountPage("perfil");
+      return;
+    }
+
     authPanelOpen = !authPanelOpen;
     renderAuthUI();
   });
@@ -210,12 +213,6 @@ function bindEvents() {
   elements.createAccountButton.addEventListener("click", () => openAccountPage("criar"));
   elements.recoverPasswordButton.addEventListener("click", () => openAccountPage("recuperar"));
   elements.signOutButton.addEventListener("click", handleSignOut);
-  elements.saveEmergencyFundButton.addEventListener("click", () => {
-    void handleBalanceSave("emergencyFund");
-  });
-  elements.saveInvestmentsButton.addEventListener("click", () => {
-    void handleBalanceSave("investments");
-  });
   elements.authPasswordInput.addEventListener("keydown", (event) => {
     if (event.key === "Enter") {
       event.preventDefault();
@@ -253,7 +250,7 @@ function renderAuthUI() {
     elements.syncFooterMessage.hidden = !elements.syncFooterMessage.textContent;
   }
 
-  elements.authPanel.hidden = Boolean(currentUser) || (!authPanelOpen && !configured);
+  elements.authPanel.hidden = Boolean(currentUser) || !authPanelOpen;
   elements.signOutButton.hidden = !currentUser;
   elements.signOutButton.disabled = authBusy;
   elements.toggleAuthButton.disabled = authBusy;
@@ -902,6 +899,12 @@ function getSyncedMessage() {
 }
 
 function getUserDisplayName() {
+  const metadata = currentUser?.user_metadata || {};
+  const fullName = String(metadata.full_name || metadata.name || "").trim();
+  if (fullName) {
+    return fullName;
+  }
+
   const email = currentUser?.email || elements.authEmailInput.value.trim();
   return email ? email.split("@")[0] : "";
 }
@@ -1204,64 +1207,7 @@ function serializeRecurringRule(rule) {
 }
 
 async function handleBalanceSave(balanceType) {
-  const input =
-    balanceType === "emergencyFund" ? elements.emergencyFundInput : elements.investmentsInput;
-  const value = normalizeMoneyValue(String(input.value || "0").replace(",", "."));
-  const previousValue = normalizeMoneyValue(state.balances[balanceType]);
-  const delta = Number((value - previousValue).toFixed(2));
-  const allocationEntry = buildAllocationEntry(balanceType, delta);
-
-  state.balances[balanceType] = value;
-  if (allocationEntry) {
-    state.transactions = [allocationEntry, ...state.transactions];
-  }
-  saveState();
   renderApp();
-
-  if (!shouldUseCloudPersistence()) {
-    setLocalModeNotice("Saldo salvo neste aparelho.");
-    return;
-  }
-
-  try {
-    setSyncNotice("Sincronizando", "Salvando seus saldos na nuvem...", "warning");
-    if (allocationEntry) {
-      await upsertCloudTransactions([allocationEntry]);
-    }
-    await upsertCloudBalances();
-    lastCloudSyncAt = new Date();
-    setSyncNotice("Sincronizado", getSyncedMessage(), "success");
-  } catch (error) {
-    handleCloudError("Nao consegui salvar seus saldos.", error);
-  }
-}
-
-function buildAllocationEntry(balanceType, delta) {
-  if (!delta) {
-    return null;
-  }
-
-  const category = ALLOCATION_CATEGORIES[balanceType];
-  if (!category) {
-    return null;
-  }
-
-  const isContribution = delta > 0;
-  const label = balanceType === "emergencyFund" ? "caixa de emergencia" : "investimentos";
-
-  return buildSingleEntry({
-    type: isContribution ? "expense" : "income",
-    amount: Math.abs(delta),
-    category,
-    date: getAllocationDate(),
-    note: isContribution ? `Aporte em ${label}` : `Retirada de ${label}`,
-  });
-}
-
-function getAllocationDate() {
-  const [year, month] = state.selectedMonth.split("-").map(Number);
-  const day = Math.min(today.getDate(), getDaysInMonth(year, month));
-  return createDateKeepingDay(year, month, day);
 }
 
 function populateMonthOptions() {
@@ -1787,15 +1733,15 @@ function renderSummary() {
   const income = sumByType(monthEntries, "income");
   const expense = sumByType(monthEntries, "expense");
   const currentBalance = getCurrentBalanceThroughMonth(state.selectedMonth);
+  const emergencyBalance = getAllocationBalanceThroughMonth("emergency", state.selectedMonth);
+  const investmentsBalance = getAllocationBalanceThroughMonth("investments", state.selectedMonth);
 
   elements.balanceValue.textContent = formatCurrency(currentBalance);
   elements.balanceValue.dataset.tone = currentBalance >= 0 ? "positive" : "negative";
   elements.incomeValue.textContent = formatCurrency(income);
   elements.expenseValue.textContent = formatCurrency(expense);
-  elements.emergencyFundValue.textContent = formatCurrency(state.balances.emergencyFund);
-  elements.investmentsValue.textContent = formatCurrency(state.balances.investments);
-  elements.emergencyFundInput.value = formatPlainMoney(state.balances.emergencyFund);
-  elements.investmentsInput.value = formatPlainMoney(state.balances.investments);
+  elements.emergencyFundValue.textContent = formatCurrency(emergencyBalance);
+  elements.investmentsValue.textContent = formatCurrency(investmentsBalance);
   elements.balanceHint.textContent =
     currentBalance >= 0
       ? `Disponivel apos reserva e investimentos ate ${formatMonthLabel(state.selectedMonth)}.`
@@ -2153,17 +2099,14 @@ function getTransactionsForMonth(monthString) {
 }
 
 function getCurrentBalanceThroughMonth(monthString) {
-  const directEntries = state.transactions.filter((entry) => {
-    return entry.date.slice(0, 7) <= monthString && !isAllocationEntry(entry);
-  });
+  const directEntries = state.transactions.filter((entry) => entry.date.slice(0, 7) <= monthString);
   const recurringEntries = getGeneratedRecurringTransactionsThroughMonth(monthString);
-  const allocatedBalance = state.balances.emergencyFund + state.balances.investments;
 
   const transactionBalance = [...directEntries, ...recurringEntries].reduce((total, entry) => {
     return entry.type === "income" ? total + entry.amount : total - entry.amount;
   }, 0);
 
-  return transactionBalance - allocatedBalance;
+  return transactionBalance;
 }
 
 function getGeneratedRecurringTransactions(monthString) {
@@ -2301,6 +2244,14 @@ function sumAllocationsByKind(entries, kind) {
   return entries
     .filter((entry) => getAllocationKind(entry) === kind && entry.type === "expense")
     .reduce((total, entry) => total + entry.amount, 0);
+}
+
+function getAllocationBalanceThroughMonth(kind, monthString) {
+  return state.transactions
+    .filter((entry) => entry.date.slice(0, 7) <= monthString && getAllocationKind(entry) === kind)
+    .reduce((total, entry) => {
+      return entry.type === "income" ? total - entry.amount : total + entry.amount;
+    }, 0);
 }
 
 function isAllocationEntry(entry) {

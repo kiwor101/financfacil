@@ -1,10 +1,29 @@
 const SUPABASE_CONFIG_KEY = "fluxo-leve-supabase-config-v1";
 const AUTH_EMAIL_KEY = "fluxo-leve-auth-email-v1";
 
+const AVATARS = [
+  { id: "kiwi", label: "K", tone: "green" },
+  { id: "fox", label: "F", tone: "orange" },
+  { id: "ocean", label: "O", tone: "blue" },
+  { id: "moon", label: "M", tone: "purple" },
+  { id: "sun", label: "S", tone: "gold" },
+  { id: "leaf", label: "L", tone: "mint" },
+];
+
 const elements = {
   title: document.querySelector("#accountTitle"),
   subtitle: document.querySelector("#accountSubtitle"),
   tabs: document.querySelectorAll(".account-tab"),
+  profileForm: document.querySelector("#profileForm"),
+  profileNameInput: document.querySelector("#profileNameInput"),
+  profileEmailInput: document.querySelector("#profileEmailInput"),
+  profilePasswordInput: document.querySelector("#profilePasswordInput"),
+  profilePasswordConfirmInput: document.querySelector("#profilePasswordConfirmInput"),
+  profileButton: document.querySelector("#profileButton"),
+  profileAvatarPreview: document.querySelector("#profileAvatarPreview"),
+  profileDisplayName: document.querySelector("#profileDisplayName"),
+  profileDisplayEmail: document.querySelector("#profileDisplayEmail"),
+  avatarPicker: document.querySelector("#avatarPicker"),
   signupForm: document.querySelector("#signupForm"),
   signupNameInput: document.querySelector("#signupNameInput"),
   signupEmailInput: document.querySelector("#signupEmailInput"),
@@ -25,6 +44,8 @@ const state = {
   mode: getInitialMode(),
   busy: false,
   supabaseClient: null,
+  currentUser: null,
+  selectedAvatar: "kiwi",
 };
 
 bootstrap();
@@ -63,6 +84,15 @@ function bootstrap() {
     }
   });
 
+  state.supabaseClient.auth.getSession().then(({ data }) => {
+    state.currentUser = data.session?.user || null;
+    if (state.mode === "perfil") {
+      hydrateProfile();
+    }
+    renderMode();
+  });
+
+  renderAvatarOptions();
   renderMode();
 }
 
@@ -76,6 +106,7 @@ function bindEvents() {
   elements.signupForm.addEventListener("submit", handleSignup);
   elements.recoveryForm.addEventListener("submit", handleRecovery);
   elements.newPasswordForm.addEventListener("submit", handleNewPassword);
+  elements.profileForm.addEventListener("submit", handleProfileSave);
 }
 
 async function handleSignup(event) {
@@ -98,6 +129,7 @@ async function handleSignup(event) {
       options: {
         data: {
           full_name: name,
+          avatar_id: state.selectedAvatar,
         },
         emailRedirectTo: getAppUrl(),
       },
@@ -124,6 +156,49 @@ async function handleSignup(event) {
     );
   } catch (error) {
     setMessage(formatAuthError(error, "Nao consegui criar a conta."), "error");
+  } finally {
+    setBusy(false);
+  }
+}
+
+async function handleProfileSave(event) {
+  event.preventDefault();
+
+  if (!state.currentUser) {
+    setMessage("Entre na conta pelo app antes de editar o perfil.", "error");
+    return;
+  }
+
+  const fullName = elements.profileNameInput.value.trim();
+  const password = elements.profilePasswordInput.value;
+  const passwordConfirm = elements.profilePasswordConfirmInput.value;
+  const updatePayload = {
+    data: {
+      full_name: fullName,
+      avatar_id: state.selectedAvatar,
+    },
+  };
+
+  if (password || passwordConfirm) {
+    if (!validatePasswordPair(password, passwordConfirm)) {
+      return;
+    }
+    updatePayload.password = password;
+  }
+
+  try {
+    setBusy(true, "Salvando...");
+    const { data, error } = await state.supabaseClient.auth.updateUser(updatePayload);
+    if (error) {
+      throw error;
+    }
+
+    state.currentUser = data.user || state.currentUser;
+    clearPasswordFields();
+    hydrateProfile();
+    setMessage("Conta atualizada com sucesso.", "success");
+  } catch (error) {
+    setMessage(formatAuthError(error, "Nao consegui atualizar a conta."), "error");
   } finally {
     setBusy(false);
   }
@@ -197,14 +272,23 @@ function setMode(mode) {
 
 function renderMode() {
   const mode = state.mode;
+  elements.profileForm.hidden = mode !== "perfil";
   elements.signupForm.hidden = mode !== "criar";
   elements.recoveryForm.hidden = mode !== "recuperar";
   elements.newPasswordForm.hidden = mode !== "nova-senha";
 
   elements.tabs.forEach((tab) => {
     tab.classList.toggle("active", tab.dataset.mode === mode);
-    tab.hidden = mode === "nova-senha";
+    tab.hidden = mode === "nova-senha" || mode === "perfil";
   });
+
+  if (mode === "perfil") {
+    elements.title.textContent = "Minha conta";
+    elements.subtitle.textContent = "Atualize seu nome, avatar ou senha.";
+    hydrateProfile();
+    setMessage("Essas informacoes ficam salvas na sua conta.", "muted");
+    return;
+  }
 
   if (mode === "recuperar") {
     elements.title.textContent = "Recuperar senha";
@@ -228,10 +312,12 @@ function renderMode() {
 
 function setBusy(isBusy, label = "") {
   state.busy = isBusy;
+  elements.profileButton.disabled = isBusy;
   elements.signupButton.disabled = isBusy;
   elements.recoveryButton.disabled = isBusy;
   elements.newPasswordButton.disabled = isBusy;
 
+  elements.profileButton.textContent = isBusy && state.mode === "perfil" ? label : "Salvar conta";
   elements.signupButton.textContent = isBusy && state.mode === "criar" ? label : "Criar conta";
   elements.recoveryButton.textContent =
     isBusy && state.mode === "recuperar" ? label : "Enviar recuperacao";
@@ -272,12 +358,68 @@ function clearPasswordFields() {
   elements.signupPasswordConfirmInput.value = "";
   elements.newPasswordInput.value = "";
   elements.newPasswordConfirmInput.value = "";
+  elements.profilePasswordInput.value = "";
+  elements.profilePasswordConfirmInput.value = "";
+}
+
+function renderAvatarOptions() {
+  elements.avatarPicker.innerHTML = "";
+  AVATARS.forEach((avatar) => {
+    const button = document.createElement("button");
+    button.className = "avatar-option";
+    button.type = "button";
+    button.dataset.avatarId = avatar.id;
+    button.dataset.tone = avatar.tone;
+    button.textContent = avatar.label;
+    button.addEventListener("click", () => {
+      state.selectedAvatar = avatar.id;
+      updateAvatarSelection();
+    });
+    elements.avatarPicker.append(button);
+  });
+
+  updateAvatarSelection();
+}
+
+function hydrateProfile() {
+  if (!state.currentUser) {
+    elements.profileNameInput.value = "";
+    elements.profileEmailInput.value = "";
+    elements.profileDisplayName.textContent = "Conta nao conectada";
+    elements.profileDisplayEmail.textContent = "Volte ao app e faca login.";
+    return;
+  }
+
+  const metadata = state.currentUser.user_metadata || {};
+  const fullName = String(metadata.full_name || metadata.name || "").trim();
+  const email = state.currentUser.email || "";
+  state.selectedAvatar = metadata.avatar_id || state.selectedAvatar || "kiwi";
+  elements.profileNameInput.value = fullName;
+  elements.profileEmailInput.value = email;
+  elements.profileDisplayName.textContent = fullName || email.split("@")[0] || "Minha conta";
+  elements.profileDisplayEmail.textContent = email;
+  updateAvatarSelection();
+}
+
+function updateAvatarSelection() {
+  const selected = AVATARS.find((avatar) => avatar.id === state.selectedAvatar) || AVATARS[0];
+  state.selectedAvatar = selected.id;
+  elements.profileAvatarPreview.textContent = selected.label;
+  elements.profileAvatarPreview.dataset.tone = selected.tone;
+
+  elements.avatarPicker.querySelectorAll(".avatar-option").forEach((button) => {
+    button.classList.toggle("active", button.dataset.avatarId === selected.id);
+  });
 }
 
 function getInitialMode() {
   const params = new URLSearchParams(window.location.search);
   const hash = new URLSearchParams(window.location.hash.replace(/^#/, ""));
   const type = params.get("type") || hash.get("type");
+
+  if (params.get("modo") === "perfil") {
+    return "perfil";
+  }
 
   if (type === "recovery" || params.get("modo") === "nova-senha") {
     return "nova-senha";

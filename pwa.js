@@ -13,8 +13,8 @@ function applyTheme(theme) {
 function updateThemeButton(button) {
   const isDark = document.documentElement.dataset.theme === "dark";
   button.innerHTML = isDark
-    ? '<span class="theme-icon" aria-hidden="true">☀</span><span class="theme-label">Modo claro</span>'
-    : '<span class="theme-icon" aria-hidden="true">☾</span><span class="theme-label">Modo dark</span>';
+    ? '<span class="theme-icon" aria-hidden="true">&#9728;</span><span class="theme-label">Modo claro</span>'
+    : '<span class="theme-icon" aria-hidden="true">&#9790;</span><span class="theme-label">Modo dark</span>';
   button.setAttribute("aria-pressed", String(isDark));
 }
 

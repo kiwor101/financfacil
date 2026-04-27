@@ -34,6 +34,60 @@
           <button class="account-tab" data-mode="recuperar" type="button">Recuperar senha</button>
         </div>
 
+        <form class="account-form profile-form" hidden id="profileForm">
+          <div class="profile-preview">
+            <div class="profile-avatar" id="profileAvatarPreview" aria-hidden="true">K</div>
+            <div>
+              <strong id="profileDisplayName">Minha conta</strong>
+              <p id="profileDisplayEmail">Dados da conta conectada.</p>
+            </div>
+          </div>
+
+          <label class="field">
+            <span class="field-label">Nome completo</span>
+            <input
+              autocomplete="name"
+              id="profileNameInput"
+              maxlength="80"
+              placeholder="Seu nome"
+              type="text"
+            />
+          </label>
+
+          <label class="field">
+            <span class="field-label">E-mail</span>
+            <input id="profileEmailInput" readonly type="email" />
+          </label>
+
+          <div class="avatar-picker" id="avatarPicker" aria-label="Escolha um avatar"></div>
+
+          <label class="field">
+            <span class="field-label">Nova senha</span>
+            <input
+              autocomplete="new-password"
+              id="profilePasswordInput"
+              minlength="6"
+              placeholder="Deixe em branco para manter"
+              type="password"
+            />
+          </label>
+
+          <label class="field">
+            <span class="field-label">Confirmar nova senha</span>
+            <input
+              autocomplete="new-password"
+              id="profilePasswordConfirmInput"
+              minlength="6"
+              placeholder="Repita a nova senha"
+              type="password"
+            />
+          </label>
+
+          <button class="primary-button account-primary" id="profileButton" type="submit">
+            Salvar conta
+          </button>
+        </form>
+
         <form class="account-form" id="signupForm">
           <label class="field">
             <span class="field-label">Nome</span>
