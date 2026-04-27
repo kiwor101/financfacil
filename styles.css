@@ -889,6 +889,14 @@ select {
   font-family: var(--headline);
 }
 
+.entry-amount[data-type="income"] {
+  color: var(--income);
+}
+
+.entry-amount[data-type="expense"] {
+  color: var(--expense);
+}
+
 .entry-meta {
   margin-top: 0.4rem;
   color: var(--muted);

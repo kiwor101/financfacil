@@ -4,6 +4,7 @@ const AUTH_EMAIL_KEY = "fluxo-leve-auth-email-v1";
 const LEGACY_IMPORT_KEY = "fluxo-leve-legacy-import-v1";
 const LEGACY_CAPTURE_DONE_KEY = "fluxo-leve-legacy-capture-done-v1";
 const CLOUD_REFRESH_INTERVAL_MS = 45000;
+const MAX_INSTALLMENTS = 1200;
 
 const CLOUD_TABLES = {
   transactions: "transactions",
@@ -1323,12 +1324,13 @@ function getPlanHelperText() {
 
   if (planType === "installment") {
     const installments = getInstallmentCount();
+    const durationText = formatInstallmentDuration(installments);
     if (amount > 0) {
       const installmentAmount = splitAmountAcrossInstallments(amount, installments)[0];
-      return `O valor sera dividido em ${installments}x de ${formatCurrency(installmentAmount)} a partir de ${formatMonthLabel(date.slice(0, 7))}.`;
+      return `A compra sera dividida em ${installments}x de ${formatCurrency(installmentAmount)} (${durationText}) a partir de ${formatMonthLabel(date.slice(0, 7))}.`;
     }
 
-    return `A compra sera dividida e repetida pelos proximos ${installments} meses.`;
+    return `A compra sera dividida e repetida pelos proximos ${durationText}.`;
   }
 
   if (planType === "recurring") {
@@ -1690,11 +1692,28 @@ function resetEntryForm(referenceDate) {
 
 function getInstallmentCount() {
   const rawValue = Number.parseInt(elements.installmentsInput.value, 10);
-  if (Number.isNaN(rawValue)) {
+  if (Number.isNaN(rawValue) || rawValue < 2) {
     return 2;
   }
 
-  return Math.min(Math.max(rawValue, 2), 24);
+  return Math.min(rawValue, MAX_INSTALLMENTS);
+}
+
+function formatInstallmentDuration(installments) {
+  if (installments < 25) {
+    return `${installments} meses`;
+  }
+
+  const years = Math.floor(installments / 12);
+  const months = installments % 12;
+  const yearText = years === 1 ? "1 ano" : `${years} anos`;
+
+  if (!months) {
+    return yearText;
+  }
+
+  const monthText = months === 1 ? "1 mes" : `${months} meses`;
+  return `${yearText} e ${monthText}`;
 }
 
 function renderApp(initialLoad = false) {
@@ -1848,7 +1867,9 @@ function renderEntries() {
   filteredEntries.forEach((entry) => {
     const node = elements.entryTemplate.content.firstElementChild.cloneNode(true);
     node.querySelector(".entry-category").textContent = entry.category;
-    node.querySelector(".entry-amount").textContent = `${entry.type === "expense" ? "-" : "+"} ${formatCurrency(entry.amount)}`;
+    const amountNode = node.querySelector(".entry-amount");
+    amountNode.dataset.type = entry.type;
+    amountNode.textContent = `${entry.type === "expense" ? "-" : "+"} ${formatCurrency(entry.amount)}`;
     node.querySelector(".entry-date").textContent = formatEntryDate(entry.date);
     node.querySelector(".entry-note").textContent = entry.note || getFallbackNote(entry);
 
