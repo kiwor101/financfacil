@@ -84,8 +84,11 @@ const elements = {
   supabaseUrlInput: document.querySelector("#supabaseUrlInput"),
   supabaseKeyInput: document.querySelector("#supabaseKeyInput"),
   authEmailInput: document.querySelector("#authEmailInput"),
+  authPasswordInput: document.querySelector("#authPasswordInput"),
   cloudConfigFields: document.querySelectorAll(".cloud-config-field"),
   saveConfigButton: document.querySelector("#saveConfigButton"),
+  passwordLoginButton: document.querySelector("#passwordLoginButton"),
+  createAccountButton: document.querySelector("#createAccountButton"),
   magicLinkButton: document.querySelector("#magicLinkButton"),
   authHelper: document.querySelector("#authHelper"),
   summaryGrid: document.querySelector("#summaryGrid"),
@@ -187,8 +190,16 @@ function bindEvents() {
   });
 
   elements.saveConfigButton.addEventListener("click", handleSaveConfig);
+  elements.passwordLoginButton.addEventListener("click", handlePasswordLogin);
+  elements.createAccountButton.addEventListener("click", handleCreateAccount);
   elements.magicLinkButton.addEventListener("click", handleSendMagicLink);
   elements.signOutButton.addEventListener("click", handleSignOut);
+  elements.authPasswordInput.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      void handlePasswordLogin();
+    }
+  });
 
   window.addEventListener("focus", () => {
     void refreshCloudData("focus");
@@ -222,6 +233,10 @@ function renderAuthUI() {
   elements.toggleAuthButton.disabled = authBusy;
   elements.saveConfigButton.disabled = authBusy;
   elements.saveConfigButton.hidden = embeddedConfig;
+  elements.passwordLoginButton.disabled = authBusy || !configured;
+  elements.passwordLoginButton.hidden = Boolean(currentUser);
+  elements.createAccountButton.disabled = authBusy || !configured;
+  elements.createAccountButton.hidden = Boolean(currentUser);
   elements.magicLinkButton.disabled = authBusy || !configured;
   elements.magicLinkButton.hidden = Boolean(currentUser);
   elements.cloudConfigFields.forEach((field) => {
@@ -251,11 +266,11 @@ function getToggleButtonLabel() {
 
 function getAuthHelperText() {
   if (currentUser) {
-    return "Conta conectada. Use o mesmo e-mail nos outros aparelhos para ver os mesmos dados.";
+    return "Conta conectada. Use o mesmo e-mail e senha nos outros aparelhos para ver os mesmos dados.";
   }
 
   if (hasEmbeddedSupabaseConfig()) {
-    return "Entre com o mesmo e-mail no celular e no computador para sincronizar seus dados.";
+    return "Entre com o mesmo e-mail e senha no celular e no computador para sincronizar seus dados.";
   }
 
   if (!hasSupabaseConfig()) {
@@ -622,6 +637,101 @@ async function handleSaveConfig() {
   }
 }
 
+async function handlePasswordLogin() {
+  if (authBusy) {
+    return;
+  }
+
+  const credentials = readAuthCredentials();
+  const config = readSupabaseConfigInputs();
+
+  if (!validatePasswordCredentials(credentials, config)) {
+    return;
+  }
+
+  try {
+    setAuthBusy(true, "Entrando...");
+    await ensureSupabaseReady(config);
+
+    const { data, error } = await supabaseClient.auth.signInWithPassword({
+      email: credentials.email,
+      password: credentials.password,
+    });
+
+    if (error) {
+      throw error;
+    }
+
+    localStorage.setItem(AUTH_EMAIL_KEY, credentials.email);
+    elements.authPasswordInput.value = "";
+    authPanelOpen = false;
+
+    if (data.session?.user) {
+      await handleSignedInSession(data.session, { reload: true });
+      return;
+    }
+
+    setSyncNotice("Sincronizando", "Entrada feita. Buscando seus dados...", "warning");
+  } catch (error) {
+    handleCloudError("Nao consegui entrar com esse e-mail e senha.", error);
+  } finally {
+    setAuthBusy(false);
+  }
+}
+
+async function handleCreateAccount() {
+  if (authBusy) {
+    return;
+  }
+
+  const credentials = readAuthCredentials();
+  const config = readSupabaseConfigInputs();
+
+  if (!validatePasswordCredentials(credentials, config)) {
+    return;
+  }
+
+  try {
+    setAuthBusy(true, "Criando...");
+    await ensureSupabaseReady(config);
+
+    const options = {};
+    const redirectTo = getAuthRedirectUrl();
+    if (redirectTo) {
+      options.emailRedirectTo = redirectTo;
+    }
+
+    const { data, error } = await supabaseClient.auth.signUp({
+      email: credentials.email,
+      password: credentials.password,
+      options,
+    });
+
+    if (error) {
+      throw error;
+    }
+
+    localStorage.setItem(AUTH_EMAIL_KEY, credentials.email);
+
+    if (data.session?.user) {
+      elements.authPasswordInput.value = "";
+      authPanelOpen = false;
+      await handleSignedInSession(data.session, { reload: true });
+      return;
+    }
+
+    setSyncNotice(
+      "Conta criada",
+      "Confira seu e-mail para confirmar a conta. Depois volte aqui e entre com sua senha.",
+      "success",
+    );
+  } catch (error) {
+    handleCloudError("Nao consegui criar a conta.", error);
+  } finally {
+    setAuthBusy(false);
+  }
+}
+
 async function handleSendMagicLink() {
   if (authBusy) {
     return;
@@ -648,8 +758,7 @@ async function handleSendMagicLink() {
 
   try {
     setAuthBusy(true, "Enviando...");
-    saveSupabaseConfig(config);
-    await initializeSupabaseClient(config);
+    await ensureSupabaseReady(config);
 
     const options = {};
     const redirectTo = getAuthRedirectUrl();
@@ -708,11 +817,58 @@ async function handleSignOut() {
 function setAuthBusy(isBusy, primaryLabel) {
   authBusy = isBusy;
   elements.saveConfigButton.disabled = isBusy;
+  elements.passwordLoginButton.disabled = isBusy || !hasSupabaseConfig(readSupabaseConfigInputs());
+  elements.createAccountButton.disabled = isBusy || !hasSupabaseConfig(readSupabaseConfigInputs());
   elements.magicLinkButton.disabled = isBusy || !hasSupabaseConfig(readSupabaseConfigInputs());
   elements.signOutButton.disabled = isBusy;
   elements.toggleAuthButton.disabled = isBusy;
-  elements.magicLinkButton.textContent = isBusy ? primaryLabel : "Enviar link";
+  elements.passwordLoginButton.textContent = isBusy ? primaryLabel : "Entrar";
+  elements.magicLinkButton.textContent = "Link por e-mail";
   renderAuthUI();
+}
+
+async function ensureSupabaseReady(config) {
+  const previousConfig = currentSupabaseConfig;
+  const needsNewClient = !supabaseClient || !isSameSupabaseConfig(config, previousConfig);
+
+  saveSupabaseConfig(config);
+
+  if (needsNewClient) {
+    await initializeSupabaseClient(config);
+  }
+}
+
+function readAuthCredentials() {
+  return {
+    email: elements.authEmailInput.value.trim().toLowerCase(),
+    password: elements.authPasswordInput.value,
+  };
+}
+
+function validatePasswordCredentials(credentials, config) {
+  if (!hasSupabaseConfig(config)) {
+    authPanelOpen = true;
+    setSyncNotice(
+      "Atencao",
+      "Salve primeiro a URL do projeto e a chave publica do Supabase.",
+      "warning",
+    );
+    return false;
+  }
+
+  if (!credentials.email) {
+    authPanelOpen = true;
+    setSyncNotice("Atencao", "Digite o e-mail da sua conta.", "warning");
+    return false;
+  }
+
+  if (!credentials.password || credentials.password.length < 6) {
+    authPanelOpen = true;
+    setSyncNotice("Atencao", "Digite uma senha com pelo menos 6 caracteres.", "warning");
+    return false;
+  }
+
+  return true;
 }
 
 function shouldUseCloudPersistence() {

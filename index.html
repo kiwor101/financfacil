@@ -99,19 +99,36 @@
               type="email"
             />
           </label>
+
+          <label class="field field-wide">
+            <span class="field-label">Senha</span>
+            <input
+              autocomplete="current-password"
+              id="authPasswordInput"
+              minlength="6"
+              placeholder="Minimo 6 caracteres"
+              type="password"
+            />
+          </label>
         </div>
 
         <div class="auth-actions">
           <button class="ghost-button sync-button" id="saveConfigButton" type="button">
             Salvar conexao
           </button>
-          <button class="primary-button primary-button-compact" id="magicLinkButton" type="button">
-            Enviar link
+          <button class="primary-button primary-button-compact" id="passwordLoginButton" type="button">
+            Entrar
+          </button>
+          <button class="ghost-button sync-button" id="createAccountButton" type="button">
+            Criar conta
+          </button>
+          <button class="ghost-button sync-button" id="magicLinkButton" type="button">
+            Link por e-mail
           </button>
         </div>
 
         <p class="micro-copy" id="authHelper">
-          Use o mesmo e-mail em todos os aparelhos para sincronizar seus lancamentos.
+          Use o mesmo e-mail e senha em todos os aparelhos para sincronizar seus lancamentos.
         </p>
       </section>
 
