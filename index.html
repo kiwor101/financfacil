@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Fluxo Leve | Controle financeiro</title>
+    <meta
+      name="description"
+      content="App simples de controle financeiro com resumo mensal, parcelamento e contas fixas."
+    />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="page-glow page-glow-left" aria-hidden="true"></div>
+    <div class="page-glow page-glow-right" aria-hidden="true"></div>
+
+    <main class="app-shell">
+      <section class="topbar reveal">
+        <div class="topbar-copy">
+          <h1>Controle Financeiro</h1>
+        </div>
+
+        <div class="topbar-controls">
+          <div class="period-grid">
+            <label class="field field-inline">
+              <span class="field-label">Mes</span>
+              <select id="monthSelect" name="monthSelect"></select>
+            </label>
+
+            <label class="field field-inline field-year">
+              <span class="field-label">Ano</span>
+              <input
+                id="yearInput"
+                inputmode="numeric"
+                list="yearOptions"
+                name="yearInput"
+                placeholder="Ano"
+                type="text"
+              />
+            </label>
+          </div>
+        </div>
+      </section>
+
+      <datalist id="yearOptions"></datalist>
+
+      <section class="sync-bar reveal" aria-label="Sincronizacao">
+        <div class="sync-status">
+          <span class="sync-pill" data-tone="muted" id="syncPill">Modo local</span>
+          <p class="sync-message" id="syncMessage">
+            Configure o Supabase para usar os mesmos dados no celular e no computador.
+          </p>
+        </div>
+
+        <div class="sync-actions">
+          <button class="ghost-button sync-button" id="toggleAuthButton" type="button">
+            Configurar
+          </button>
+          <button
+            class="ghost-button sync-button"
+            hidden
+            id="signOutButton"
+            type="button"
+          >
+            Sair
+          </button>
+        </div>
+      </section>
+
+      <section class="panel panel-compact auth-panel reveal" hidden id="authPanel">
+        <div class="auth-grid">
+          <label class="field field-wide cloud-config-field">
+            <span class="field-label">Projeto Supabase</span>
+            <input
+              autocomplete="url"
+              id="supabaseUrlInput"
+              placeholder="https://seu-projeto.supabase.co"
+              type="url"
+            />
+          </label>
+
+          <label class="field field-wide cloud-config-field">
+            <span class="field-label">Chave publica</span>
+            <input
+              autocomplete="off"
+              id="supabaseKeyInput"
+              placeholder="Cole aqui a anon key"
+              spellcheck="false"
+              type="text"
+            />
+          </label>
+
+          <label class="field field-wide">
+            <span class="field-label">Seu e-mail</span>
+            <input
+              autocomplete="email"
+              id="authEmailInput"
+              placeholder="voce@exemplo.com"
+              type="email"
+            />
+          </label>
+        </div>
+
+        <div class="auth-actions">
+          <button class="ghost-button sync-button" id="saveConfigButton" type="button">
+            Salvar conexao
+          </button>
+          <button class="primary-button primary-button-compact" id="magicLinkButton" type="button">
+            Enviar link
+          </button>
+        </div>
+
+        <p class="micro-copy" id="authHelper">
+          Use o mesmo e-mail em todos os aparelhos para sincronizar seus lancamentos.
+        </p>
+      </section>
+
+      <section class="summary-grid reveal" id="summaryGrid" aria-label="Resumo financeiro">
+        <article class="summary-card tone-balance">
+          <span class="summary-label">Saldo do mes</span>
+          <strong class="summary-value" id="balanceValue">R$ 0,00</strong>
+          <span class="summary-footnote" id="balanceHint">Sem lancamentos ainda.</span>
+        </article>
+
+        <article class="summary-card tone-income">
+          <span class="summary-label">Entradas</span>
+          <strong class="summary-value" id="incomeValue">R$ 0,00</strong>
+          <span class="summary-footnote">Tudo o que entrou no periodo.</span>
+        </article>
+
+        <article class="summary-card tone-expense">
+          <span class="summary-label">Saidas</span>
+          <strong class="summary-value" id="expenseValue">R$ 0,00</strong>
+          <span class="summary-footnote">Tudo o que saiu no periodo.</span>
+        </article>
+
+        <article class="summary-card tone-commitment">
+          <span class="summary-label">Compromissos ativos</span>
+          <strong class="summary-value" id="commitmentValue">0</strong>
+          <span class="summary-footnote" id="commitmentHint">
+            Nenhuma conta fixa ou parcelamento ativo.
+          </span>
+        </article>
+      </section>
+
+      <section class="content-grid">
+        <article class="panel panel-compact reveal">
+          <div class="panel-heading">
+            <div>
+              <h2>Lancamento</h2>
+            </div>
+          </div>
+
+          <form id="entryForm" class="entry-form">
+            <fieldset class="type-switch" aria-label="Tipo de lancamento">
+              <label>
+                <input checked name="entryType" type="radio" value="expense" />
+                <span>Saida</span>
+              </label>
+              <label>
+                <input name="entryType" type="radio" value="income" />
+                <span>Entrada</span>
+              </label>
+            </fieldset>
+
+            <div class="form-grid">
+              <label class="field">
+                <span class="field-label">Valor</span>
+                <input
+                  id="amountInput"
+                  inputmode="decimal"
+                  min="0.01"
+                  name="amount"
+                  placeholder="0,00"
+                  required
+                  step="0.01"
+                  type="number"
+                />
+              </label>
+
+              <label class="field">
+                <span class="field-label">Categoria</span>
+                <select id="categoryInput" name="category" required></select>
+              </label>
+
+              <label class="field">
+                <span class="field-label">Data</span>
+                <input id="dateInput" name="date" required type="date" />
+              </label>
+
+              <label class="field">
+                <span class="field-label">Como registrar</span>
+                <select id="planTypeInput" name="planType">
+                  <option value="single">Avulsa</option>
+                  <option value="installment">Parcelada</option>
+                  <option value="recurring">Fixa mensal</option>
+                </select>
+              </label>
+
+              <label class="field field-wide note-field">
+                <span class="field-label">Observacao</span>
+                <input
+                  id="noteInput"
+                  maxlength="80"
+                  name="note"
+                  placeholder="Ex.: mercado da semana"
+                  type="text"
+                />
+              </label>
+            </div>
+
+            <div class="plan-box" id="planBox">
+              <label class="field" id="installmentsField" hidden>
+                <span class="field-label">Quantidade de parcelas</span>
+                <input
+                  id="installmentsInput"
+                  max="24"
+                  min="2"
+                  name="installments"
+                  step="1"
+                  type="number"
+                  value="2"
+                />
+              </label>
+
+              <p class="plan-note" id="planHelper">
+                A movimentacao sera registrada apenas uma vez.
+              </p>
+            </div>
+
+            <button
+              class="primary-button primary-button-compact"
+              id="submitEntryButton"
+              type="submit"
+            >
+              Salvar
+            </button>
+          </form>
+        </article>
+
+        <article class="panel panel-compact insights-panel reveal">
+          <div class="panel-heading">
+            <div>
+              <h2>Leitura rapida</h2>
+            </div>
+          </div>
+
+          <div class="insight-stack" id="insightStack"></div>
+
+          <div class="mini-chart">
+            <div class="chart-header">
+              <h3>Ritmo dos ultimos 6 meses</h3>
+              <p>Comparativo de entradas e saidas.</p>
+            </div>
+            <div class="trend-bars" id="trendBars" aria-label="Grafico dos ultimos meses"></div>
+          </div>
+        </article>
+      </section>
+
+      <section class="panel reveal">
+        <div class="panel-heading">
+          <div>
+            <h2>Contas fixas e parcelamentos</h2>
+          </div>
+        </div>
+
+        <div class="commitments-grid">
+          <section class="commitment-column">
+            <div class="commitment-header">
+              <h3>Contas fixas</h3>
+              <p>Itens mensais que se repetem a partir da data escolhida.</p>
+            </div>
+            <div class="commitment-list" id="recurringList"></div>
+          </section>
+
+          <section class="commitment-column">
+            <div class="commitment-header">
+              <h3>Parcelamentos</h3>
+              <p>Compras divididas que continuam aparecendo nos proximos meses.</p>
+            </div>
+            <div class="commitment-list" id="installmentList"></div>
+          </section>
+        </div>
+      </section>
+
+      <section class="panel reveal">
+        <div class="panel-heading">
+          <div>
+            <h2>Seus lancamentos</h2>
+          </div>
+
+          <div class="filters">
+            <label class="field field-compact">
+              <span class="field-label">Buscar</span>
+              <input id="searchInput" placeholder="Categoria ou observacao" type="search" />
+            </label>
+
+            <label class="field field-compact">
+              <span class="field-label">Tipo</span>
+              <select id="typeFilter">
+                <option value="all">Todos</option>
+                <option value="expense">Saidas</option>
+                <option value="income">Entradas</option>
+              </select>
+            </label>
+          </div>
+        </div>
+
+        <div class="entry-list" id="entryList"></div>
+      </section>
+    </main>
+
+    <template id="entryTemplate">
+      <article class="entry-item">
+        <div class="entry-main">
+          <div class="entry-topline">
+            <strong class="entry-category"></strong>
+            <span class="entry-amount"></span>
+          </div>
+          <div class="entry-meta">
+            <span class="entry-date"></span>
+            <span class="entry-note"></span>
+          </div>
+          <div class="entry-flags">
+            <span class="entry-type-pill"></span>
+            <span class="entry-plan-pill"></span>
+          </div>
+        </div>
+        <div class="entry-actions">
+          <button class="ghost-button danger-button entry-delete" type="button">Excluir</button>
+        </div>
+      </article>
+    </template>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="./supabase-config.js"></script>
+    <script src="./app.js"></script>
+  </body>
+</html>
