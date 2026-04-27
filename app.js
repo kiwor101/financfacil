@@ -1885,20 +1885,20 @@ function renderTrend() {
   elements.trendBars.innerHTML = "";
 
   totals.forEach((item) => {
-    const column = document.createElement("div");
-    column.className = "trend-column";
-    const incomeHeight = Math.max(4, (item.income / peakValue) * 72);
-    const expenseHeight = Math.max(4, (item.expense / peakValue) * 72);
+    const row = document.createElement("div");
+    row.className = "trend-row";
+    const incomeWidth = item.income > 0 ? Math.max(4, (item.income / peakValue) * 100) : 0;
+    const expenseWidth = item.expense > 0 ? Math.max(4, (item.expense / peakValue) * 100) : 0;
 
-    column.innerHTML = `
-      <div class="trend-stack">
-        <span class="trend-bar income" style="height: ${incomeHeight}px" title="Entradas ${formatCurrency(item.income)}"></span>
-        <span class="trend-bar expense" style="height: ${expenseHeight}px" title="Saidas ${formatCurrency(item.expense)}"></span>
-      </div>
+    row.innerHTML = `
       <span class="trend-label">${formatMonthLabel(item.month)}</span>
+      <div class="trend-lines">
+        <span class="trend-line income" style="width: ${incomeWidth}%" title="Entradas ${formatCurrency(item.income)}"></span>
+        <span class="trend-line expense" style="width: ${expenseWidth}%" title="Saidas ${formatCurrency(item.expense)}"></span>
+      </div>
     `;
 
-    elements.trendBars.append(column);
+    elements.trendBars.append(row);
   });
 }
 
