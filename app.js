@@ -1887,8 +1887,8 @@ function renderTrend() {
   totals.forEach((item) => {
     const column = document.createElement("div");
     column.className = "trend-column";
-    const incomeHeight = (item.income / peakValue) * 140;
-    const expenseHeight = (item.expense / peakValue) * 140;
+    const incomeHeight = Math.max(4, (item.income / peakValue) * 72);
+    const expenseHeight = Math.max(4, (item.expense / peakValue) * 72);
 
     column.innerHTML = `
       <div class="trend-stack">
