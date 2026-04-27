@@ -25,6 +25,15 @@
         </div>
 
         <div class="topbar-controls">
+          <button
+            class="ghost-button theme-toggle"
+            id="themeToggleButton"
+            type="button"
+            aria-pressed="false"
+          >
+            Modo dark
+          </button>
+
           <div class="period-grid">
             <label class="field field-inline">
               <span class="field-label">Mes</span>
@@ -372,6 +381,11 @@
 
         <div class="entry-list" id="entryList"></div>
       </section>
+
+      <footer class="app-footer">
+        <span>Copyright &copy; 2026 kiwors.</span>
+        <span>Controle financeiro simples para o dia a dia.</span>
+      </footer>
     </main>
 
     <template id="entryTemplate">

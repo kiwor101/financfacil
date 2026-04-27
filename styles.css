@@ -20,12 +20,34 @@
   --body: "Aptos", "Segoe UI", "Calibri", sans-serif;
 }
 
+:root[data-theme="dark"] {
+  --bg: #0c1613;
+  --surface: rgba(16, 27, 24, 0.88);
+  --surface-strong: rgba(23, 37, 33, 0.88);
+  --surface-border: rgba(210, 232, 222, 0.13);
+  --ink: #edf7f1;
+  --muted: #a7bbb2;
+  --accent: #31c6a4;
+  --accent-strong: #7ee0c8;
+  --income: #61d49f;
+  --expense: #f09472;
+  --savings: #90b3ff;
+  --warning: #f0c66e;
+  --danger: #f08a8a;
+  --shadow: 0 24px 70px rgba(0, 0, 0, 0.34);
+}
+
 * {
   box-sizing: border-box;
 }
 
 html {
   color-scheme: light;
+}
+
+:root[data-theme="dark"] html,
+:root[data-theme="dark"] {
+  color-scheme: dark;
 }
 
 body {
@@ -37,6 +59,13 @@ body {
     linear-gradient(180deg, #f8f3ea 0%, var(--bg) 45%, #f0e6d8 100%);
   color: var(--ink);
   font-family: var(--body);
+}
+
+:root[data-theme="dark"] body {
+  background:
+    radial-gradient(circle at top left, rgba(49, 198, 164, 0.16), transparent 28rem),
+    radial-gradient(circle at 92% 10%, rgba(240, 148, 114, 0.12), transparent 20rem),
+    linear-gradient(180deg, #08110f 0%, var(--bg) 52%, #10120e 100%);
 }
 
 button,
@@ -70,6 +99,14 @@ select {
   right: -5rem;
   bottom: 10rem;
   background: radial-gradient(circle, rgba(204, 99, 66, 0.22), transparent 70%);
+}
+
+:root[data-theme="dark"] .page-glow-left {
+  background: radial-gradient(circle, rgba(49, 198, 164, 0.18), transparent 70%);
+}
+
+:root[data-theme="dark"] .page-glow-right {
+  background: radial-gradient(circle, rgba(240, 148, 114, 0.14), transparent 70%);
 }
 
 .app-shell {
@@ -135,6 +172,7 @@ select {
 .topbar-controls {
   display: flex;
   align-items: end;
+  gap: 0.55rem;
 }
 
 .period-grid {
@@ -164,6 +202,13 @@ select {
   border: 1px solid rgba(36, 54, 46, 0.12);
   background: rgba(255, 255, 255, 0.82);
   color: var(--ink);
+}
+
+:root[data-theme="dark"] .field input,
+:root[data-theme="dark"] .field select,
+:root[data-theme="dark"] .balance-editor input {
+  border-color: rgba(210, 232, 222, 0.13);
+  background: rgba(255, 255, 255, 0.06);
 }
 
 .field-year input {
@@ -386,6 +431,7 @@ select {
   height: 6.4rem;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.24);
+  pointer-events: none;
 }
 
 .summary-label {
@@ -465,6 +511,27 @@ select {
   background: linear-gradient(160deg, rgba(52, 95, 184, 0.13), rgba(248, 251, 255, 0.9));
 }
 
+:root[data-theme="dark"] .tone-balance {
+  background: linear-gradient(160deg, rgba(49, 198, 164, 0.18), rgba(16, 27, 24, 0.92));
+}
+
+:root[data-theme="dark"] .tone-income {
+  background: linear-gradient(160deg, rgba(97, 212, 159, 0.16), rgba(16, 27, 24, 0.92));
+}
+
+:root[data-theme="dark"] .tone-expense {
+  background: linear-gradient(160deg, rgba(240, 148, 114, 0.16), rgba(16, 27, 24, 0.92));
+}
+
+:root[data-theme="dark"] .tone-commitment,
+:root[data-theme="dark"] .tone-investments {
+  background: linear-gradient(160deg, rgba(144, 179, 255, 0.15), rgba(16, 27, 24, 0.92));
+}
+
+:root[data-theme="dark"] .tone-emergency {
+  background: linear-gradient(160deg, rgba(240, 198, 110, 0.16), rgba(16, 27, 24, 0.92));
+}
+
 .content-grid {
   display: grid;
   grid-template-columns: minmax(0, 1.3fr) minmax(220px, 0.64fr);
@@ -536,6 +603,19 @@ select {
   border: 1px solid rgba(36, 54, 46, 0.1);
 }
 
+:root[data-theme="dark"] .ghost-button,
+:root[data-theme="dark"] .account-tab,
+:root[data-theme="dark"] .type-switch span {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(210, 232, 222, 0.12);
+  color: var(--ink);
+}
+
+.theme-toggle {
+  min-height: 2.45rem;
+  white-space: nowrap;
+}
+
 .primary-button-compact {
   min-width: 5.8rem;
   padding: 0.66rem 0.95rem;
@@ -590,6 +670,12 @@ select {
   border-color: rgba(13, 139, 114, 0.22);
 }
 
+:root[data-theme="dark"] .type-switch input:checked + span,
+:root[data-theme="dark"] .account-tab.active {
+  background: linear-gradient(135deg, rgba(49, 198, 164, 0.2), rgba(255, 255, 255, 0.08));
+  border-color: rgba(49, 198, 164, 0.28);
+}
+
 .form-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -632,6 +718,16 @@ select {
   border-radius: var(--radius-md);
   background: rgba(255, 255, 255, 0.62);
   border: 1px solid rgba(36, 54, 46, 0.08);
+}
+
+:root[data-theme="dark"] .plan-box,
+:root[data-theme="dark"] .mini-chart,
+:root[data-theme="dark"] .commitment-item,
+:root[data-theme="dark"] .entry-item,
+:root[data-theme="dark"] .account-message,
+:root[data-theme="dark"] .empty-state {
+  background: rgba(255, 255, 255, 0.055);
+  border-color: rgba(210, 232, 222, 0.11);
 }
 
 .chart-header h3,
@@ -853,6 +949,16 @@ select {
   color: var(--muted);
 }
 
+.app-footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin: 1rem 0 0;
+  padding: 0.85rem 0.95rem;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
 .reveal {
   opacity: 0;
   transform: translateY(22px);
@@ -913,6 +1019,7 @@ select {
 
   .topbar-controls {
     justify-content: flex-start;
+    flex-wrap: wrap;
   }
 
   .sync-actions {
@@ -921,6 +1028,10 @@ select {
 
   .period-grid {
     grid-template-columns: minmax(112px, 126px) minmax(78px, 92px);
+  }
+
+  .theme-toggle {
+    order: 2;
   }
 
   .trend-bars {
@@ -954,6 +1065,10 @@ select {
   }
 
   .topbar-controls {
+    width: 100%;
+  }
+
+  .theme-toggle {
     width: 100%;
   }
 
@@ -1049,5 +1164,11 @@ select {
   .field-compact {
     min-width: 0;
     width: 100%;
+  }
+
+  .app-footer {
+    flex-direction: column;
+    padding-inline: 0.25rem;
+    text-align: center;
   }
 }
