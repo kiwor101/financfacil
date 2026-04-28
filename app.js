@@ -10,6 +10,29 @@ const ALLOCATION_CATEGORIES = {
   investments: "Investimentos",
   investmentWithdrawal: "Saque investimentos",
 };
+const EMERGENCY_CATEGORY_KEYS = new Set([
+  "caixadeemergencia",
+  "emergencia",
+  "reservadeemergencia",
+  "reservaemergencia",
+  "fundodeemergencia",
+  "fundoemergencia",
+  "reserva",
+]);
+const INVESTMENT_CATEGORY_KEYS = new Set([
+  "investimentos",
+  "investimento",
+  "aplicacaoinvestimentos",
+  "aplicacaoinvestimento",
+  "aporteinvestimentos",
+  "aporteinvestimento",
+]);
+const INVESTMENT_WITHDRAWAL_CATEGORY_KEYS = new Set([
+  "saqueinvestimentos",
+  "saqueinvestimento",
+  "resgateinvestimentos",
+  "resgateinvestimento",
+]);
 
 const CLOUD_TABLES = {
   transactions: "transactions",
@@ -1063,11 +1086,40 @@ function normalizeCategoryLabel(category) {
     cartaodecredito: "Cartão de crédito",
     salario: "Salário",
     caixadeemergencia: ALLOCATION_CATEGORIES.emergencyFund,
+    emergencia: ALLOCATION_CATEGORIES.emergencyFund,
+    reservadeemergencia: ALLOCATION_CATEGORIES.emergencyFund,
+    reservaemergencia: ALLOCATION_CATEGORIES.emergencyFund,
+    fundodeemergencia: ALLOCATION_CATEGORIES.emergencyFund,
+    fundoemergencia: ALLOCATION_CATEGORIES.emergencyFund,
     saqueinvestimentos: ALLOCATION_CATEGORIES.investmentWithdrawal,
+    saqueinvestimento: ALLOCATION_CATEGORIES.investmentWithdrawal,
+    resgateinvestimentos: ALLOCATION_CATEGORIES.investmentWithdrawal,
+    resgateinvestimento: ALLOCATION_CATEGORIES.investmentWithdrawal,
     investimentos: ALLOCATION_CATEGORIES.investments,
+    investimento: ALLOCATION_CATEGORIES.investments,
+    aplicacaoinvestimentos: ALLOCATION_CATEGORIES.investments,
+    aplicacaoinvestimento: ALLOCATION_CATEGORIES.investments,
+    aporteinvestimentos: ALLOCATION_CATEGORIES.investments,
+    aporteinvestimento: ALLOCATION_CATEGORIES.investments,
   };
 
-  return labels[normalized] || value || "Outros";
+  if (labels[normalized]) {
+    return labels[normalized];
+  }
+
+  if (isEmergencyCategoryKey(normalized)) {
+    return ALLOCATION_CATEGORIES.emergencyFund;
+  }
+
+  if (isInvestmentWithdrawalCategoryKey(normalized)) {
+    return ALLOCATION_CATEGORIES.investmentWithdrawal;
+  }
+
+  if (isInvestmentCategoryKey(normalized)) {
+    return ALLOCATION_CATEGORIES.investments;
+  }
+
+  return value || "Outros";
 }
 
 function normalizeCategoryKey(category) {
@@ -2339,14 +2391,11 @@ function isAllocationEntry(entry) {
 function getAllocationKind(entry) {
   const categoryKey = normalizeCategoryKey(entry.category);
 
-  if (categoryKey === normalizeCategoryKey(ALLOCATION_CATEGORIES.emergencyFund)) {
+  if (isEmergencyCategoryKey(categoryKey)) {
     return "emergency";
   }
 
-  if (
-    categoryKey === normalizeCategoryKey(ALLOCATION_CATEGORIES.investments) ||
-    categoryKey === normalizeCategoryKey(ALLOCATION_CATEGORIES.investmentWithdrawal)
-  ) {
+  if (isInvestmentCategoryKey(categoryKey) || isInvestmentWithdrawalCategoryKey(categoryKey)) {
     return "investments";
   }
 
@@ -2356,16 +2405,16 @@ function getAllocationKind(entry) {
 function getCurrentBalanceImpact(entry) {
   const categoryKey = normalizeCategoryKey(entry.category);
 
-  if (categoryKey === normalizeCategoryKey(ALLOCATION_CATEGORIES.emergencyFund)) {
+  if (isEmergencyCategoryKey(categoryKey)) {
     return entry.type === "income" ? -entry.amount : entry.amount;
   }
 
-  if (categoryKey === normalizeCategoryKey(ALLOCATION_CATEGORIES.investments)) {
-    return -entry.amount;
+  if (isInvestmentWithdrawalCategoryKey(categoryKey)) {
+    return entry.amount;
   }
 
-  if (categoryKey === normalizeCategoryKey(ALLOCATION_CATEGORIES.investmentWithdrawal)) {
-    return entry.amount;
+  if (isInvestmentCategoryKey(categoryKey)) {
+    return -entry.amount;
   }
 
   return entry.type === "income" ? entry.amount : -entry.amount;
@@ -2374,19 +2423,44 @@ function getCurrentBalanceImpact(entry) {
 function getAllocationBalanceImpact(entry) {
   const categoryKey = normalizeCategoryKey(entry.category);
 
-  if (categoryKey === normalizeCategoryKey(ALLOCATION_CATEGORIES.emergencyFund)) {
+  if (isEmergencyCategoryKey(categoryKey)) {
     return entry.type === "income" ? entry.amount : -entry.amount;
   }
 
-  if (categoryKey === normalizeCategoryKey(ALLOCATION_CATEGORIES.investments)) {
-    return entry.amount;
-  }
-
-  if (categoryKey === normalizeCategoryKey(ALLOCATION_CATEGORIES.investmentWithdrawal)) {
+  if (isInvestmentWithdrawalCategoryKey(categoryKey)) {
     return -entry.amount;
   }
 
+  if (isInvestmentCategoryKey(categoryKey)) {
+    return entry.amount;
+  }
+
   return 0;
+}
+
+function isEmergencyCategoryKey(categoryKey) {
+  return (
+    EMERGENCY_CATEGORY_KEYS.has(categoryKey) ||
+    categoryKey.includes("emerg") ||
+    categoryKey.includes("reserva")
+  );
+}
+
+function isInvestmentCategoryKey(categoryKey) {
+  return (
+    INVESTMENT_CATEGORY_KEYS.has(categoryKey) ||
+    (categoryKey.includes("invest") && !isInvestmentWithdrawalCategoryKey(categoryKey)) ||
+    (categoryKey.includes("aplicac") && !isInvestmentWithdrawalCategoryKey(categoryKey)) ||
+    (categoryKey.includes("aporte") && !isInvestmentWithdrawalCategoryKey(categoryKey))
+  );
+}
+
+function isInvestmentWithdrawalCategoryKey(categoryKey) {
+  return (
+    INVESTMENT_WITHDRAWAL_CATEGORY_KEYS.has(categoryKey) ||
+    categoryKey.includes("saqueinvest") ||
+    categoryKey.includes("resgateinvest")
+  );
 }
 
 function getRollingMonths(count) {
