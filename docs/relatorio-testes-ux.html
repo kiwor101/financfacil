@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Relatorio de testes e UX | Financfacil</title>
+    <style>
+      :root {
+        --bg: #071512;
+        --panel: #10241f;
+        --panel-soft: #162c27;
+        --line: rgba(191, 226, 211, 0.15);
+        --text: #eef8f3;
+        --muted: #a9c5ba;
+        --green: #55d6ac;
+        --red: #f28f74;
+        --blue: #88b9ff;
+        --purple: #b99cff;
+        --gold: #f0c36d;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        color: var(--text);
+        font-family: "Segoe UI", sans-serif;
+        background:
+          radial-gradient(circle at 10% 20%, rgba(85, 214, 172, 0.18), transparent 28rem),
+          radial-gradient(circle at 92% 8%, rgba(136, 185, 255, 0.16), transparent 24rem),
+          linear-gradient(135deg, #06100e, #111813);
+      }
+
+      .board {
+        width: min(1180px, calc(100% - 48px));
+        margin: 0 auto;
+        padding: 44px 0;
+      }
+
+      .hero {
+        display: grid;
+        grid-template-columns: 1.2fr 0.8fr;
+        gap: 18px;
+        align-items: stretch;
+        margin-bottom: 18px;
+      }
+
+      .card {
+        border: 1px solid var(--line);
+        border-radius: 30px;
+        background: rgba(16, 36, 31, 0.76);
+        box-shadow: 0 28px 70px rgba(0, 0, 0, 0.32);
+        padding: 24px;
+      }
+
+      .eyebrow {
+        display: inline-flex;
+        border-radius: 999px;
+        padding: 8px 12px;
+        color: var(--green);
+        background: rgba(85, 214, 172, 0.11);
+        font-size: 13px;
+        font-weight: 800;
+      }
+
+      h1 {
+        margin: 22px 0 10px;
+        font-size: clamp(36px, 6vw, 64px);
+        line-height: 0.9;
+        letter-spacing: -0.06em;
+      }
+
+      h2 {
+        margin: 0 0 14px;
+        font-size: 20px;
+      }
+
+      p {
+        margin: 0;
+        color: var(--muted);
+        line-height: 1.55;
+      }
+
+      .score {
+        display: grid;
+        gap: 12px;
+      }
+
+      .score strong {
+        display: block;
+        font-size: 42px;
+        letter-spacing: -0.05em;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 18px;
+      }
+
+      .checklist {
+        display: grid;
+        gap: 12px;
+      }
+
+      .check {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 10px;
+        align-items: start;
+        padding: 12px;
+        border-radius: 18px;
+        background: rgba(255, 255, 255, 0.04);
+      }
+
+      .dot {
+        width: 12px;
+        height: 12px;
+        margin-top: 5px;
+        border-radius: 999px;
+        background: var(--green);
+        box-shadow: 0 0 0 6px rgba(85, 214, 172, 0.1);
+      }
+
+      .dot.warn {
+        background: var(--gold);
+        box-shadow: 0 0 0 6px rgba(240, 195, 109, 0.1);
+      }
+
+      .idea {
+        min-height: 210px;
+        display: grid;
+        gap: 14px;
+      }
+
+      .idea-number {
+        width: 44px;
+        height: 44px;
+        display: grid;
+        place-items: center;
+        border-radius: 16px;
+        color: #081512;
+        background: var(--green);
+        font-weight: 900;
+      }
+
+      .idea:nth-child(2) .idea-number {
+        background: var(--blue);
+      }
+
+      .idea:nth-child(3) .idea-number {
+        background: var(--purple);
+      }
+
+      .phone-flow {
+        grid-column: 1 / -1;
+        display: grid;
+        grid-template-columns: 0.8fr 1.2fr;
+        gap: 18px;
+        align-items: center;
+      }
+
+      .mock-phone {
+        width: min(320px, 100%);
+        margin: 0 auto;
+        border: 1px solid var(--line);
+        border-radius: 38px;
+        padding: 16px;
+        background: #081612;
+      }
+
+      .mock-screen {
+        border-radius: 28px;
+        background: linear-gradient(180deg, #f7f0e2, #edf5ed);
+        color: #0c241c;
+        padding: 18px;
+      }
+
+      .mock-card {
+        border-radius: 22px;
+        padding: 14px;
+        margin-bottom: 10px;
+        background: rgba(255, 255, 255, 0.82);
+        border: 1px solid rgba(12, 36, 28, 0.08);
+      }
+
+      .mock-card.big strong {
+        display: block;
+        margin-top: 6px;
+        font-size: 28px;
+        color: #0c9a78;
+      }
+
+      .mock-action {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+      }
+
+      .mock-action span {
+        border-radius: 16px;
+        padding: 10px 6px;
+        text-align: center;
+        font-size: 12px;
+        font-weight: 800;
+        background: rgba(12, 154, 120, 0.13);
+      }
+
+      .roadmap {
+        display: grid;
+        gap: 12px;
+      }
+
+      .roadmap-item {
+        display: grid;
+        grid-template-columns: 100px 1fr;
+        gap: 12px;
+        align-items: start;
+        padding: 14px;
+        border-radius: 18px;
+        background: rgba(255, 255, 255, 0.04);
+      }
+
+      .tag {
+        display: inline-flex;
+        justify-content: center;
+        border-radius: 999px;
+        padding: 7px 10px;
+        color: #081512;
+        background: var(--gold);
+        font-weight: 900;
+        font-size: 12px;
+      }
+
+      @media (max-width: 860px) {
+        .hero,
+        .grid,
+        .phone-flow {
+          grid-template-columns: 1fr;
+        }
+
+        .board {
+          width: min(100% - 24px, 1180px);
+          padding: 20px 0;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="board">
+      <section class="hero">
+        <article class="card">
+          <span class="eyebrow">Financfacil em desenvolvimento</span>
+          <h1>Testes, seguranca e proximos passos</h1>
+          <p>
+            O app passou nos fluxos principais. O proximo ganho grande e reduzir atrito no celular:
+            menos campos visiveis, mais acoes guiadas e uma leitura mais rapida do que aconteceu no mes.
+          </p>
+        </article>
+
+        <article class="card score">
+          <h2>Resultado rapido</h2>
+          <div>
+            <strong>OK</strong>
+            <p>Desktop e celular sem overflow lateral, sem erro de console e com saldos coerentes.</p>
+          </div>
+          <div>
+            <strong>1 alerta</strong>
+            <p>Dados locais ficam no navegador em modo local. Para uso compartilhado, vale criar bloqueio por PIN.</p>
+          </div>
+        </article>
+      </section>
+
+      <section class="grid">
+        <article class="card">
+          <h2>Checklist dos testes</h2>
+          <div class="checklist">
+            <div class="check"><span class="dot"></span><p>Lancamentos, edicao, parcelamento e conta fixa funcionando.</p></div>
+            <div class="check"><span class="dot"></span><p>Saldo atual, reserva e investimentos batendo com as regras novas.</p></div>
+            <div class="check"><span class="dot"></span><p>Texto malicioso em observacao aparece como texto, sem executar HTML.</p></div>
+            <div class="check"><span class="dot"></span><p>Senha nao ficou salva no localStorage durante os testes.</p></div>
+          </div>
+        </article>
+
+        <article class="card">
+          <h2>Seguranca</h2>
+          <div class="checklist">
+            <div class="check"><span class="dot"></span><p>RLS ativo nas tabelas do Supabase e politicas por usuario.</p></div>
+            <div class="check"><span class="dot"></span><p>Nenhuma secret key ou service_role encontrada no projeto.</p></div>
+            <div class="check"><span class="dot warn"></span><p>A publishable key esta publica. Isso e aceitavel, mas exige RLS sempre ligado.</p></div>
+            <div class="check"><span class="dot warn"></span><p>CDN do Supabase deveria ser fixada em versao exata antes de producao maior.</p></div>
+          </div>
+        </article>
+
+        <article class="card">
+          <h2>Melhorias de UX</h2>
+          <div class="checklist">
+            <div class="check"><span class="dot"></span><p>Adicionar atalhos: entrada, saida, reserva e investimento.</p></div>
+            <div class="check"><span class="dot"></span><p>Criar uma revisao do mes com frase curta: sobrou, faltou ou empatou.</p></div>
+            <div class="check"><span class="dot"></span><p>Mostrar proximas contas dos proximos 7 dias.</p></div>
+            <div class="check"><span class="dot"></span><p>Ter filtros salvos no historico: tudo, entradas, saidas e carteiras.</p></div>
+          </div>
+        </article>
+
+        <article class="card idea">
+          <span class="idea-number">1</span>
+          <h2>Home mais acionavel</h2>
+          <p>Logo abaixo dos saldos, colocar botoes grandes: Recebi, Gastei, Guardei e Investi. Isso reduz cliques no celular.</p>
+        </article>
+
+        <article class="card idea">
+          <span class="idea-number">2</span>
+          <h2>Historico mais inteligente</h2>
+          <p>Agrupar por dia e destacar automaticamente os maiores gastos. Fica mais facil revisar sem procurar item por item.</p>
+        </article>
+
+        <article class="card idea">
+          <span class="idea-number">3</span>
+          <h2>Seguranca simples</h2>
+          <p>Opcao de bloqueio por PIN no app. Nao substitui login, mas protege o uso rapido em celular compartilhado.</p>
+        </article>
+
+        <article class="card phone-flow">
+          <div class="mock-phone">
+            <div class="mock-screen">
+              <div class="mock-card big">
+                <span>Saldo atual</span>
+                <strong>R$ 2.480</strong>
+                <small>Reserva: R$ 700 | Invest.: R$ 350</small>
+              </div>
+              <div class="mock-action">
+                <span>Recebi</span>
+                <span>Gastei</span>
+                <span>Guardei</span>
+              </div>
+              <div class="mock-card">
+                <strong>Proximos 7 dias</strong>
+                <p>Internet vence sexta. Cartao fecha dia 10.</p>
+              </div>
+              <div class="mock-card">
+                <strong>Resumo do mes</strong>
+                <p>Voce esta R$ 180 melhor que o mes passado.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="roadmap">
+            <h2>Roadmap sugerido</h2>
+            <div class="roadmap-item">
+              <span class="tag">Agora</span>
+              <p>Atalhos de lancamento e historico agrupado por dia.</p>
+            </div>
+            <div class="roadmap-item">
+              <span class="tag">Depois</span>
+              <p>Alertas de vencimento, resumo inteligente e exportacao CSV.</p>
+            </div>
+            <div class="roadmap-item">
+              <span class="tag">App</span>
+              <p>PIN local, PWA instalavel polido e notificacoes opcionais.</p>
+            </div>
+          </div>
+        </article>
+      </section>
+    </main>
+  </body>
+</html>
