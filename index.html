@@ -27,7 +27,7 @@
           aria-pressed="false"
         >
           <span class="theme-icon" aria-hidden="true">&#9790;</span>
-          <span class="theme-label">Modo dark</span>
+          <span class="theme-label">Modo escuro</span>
         </button>
       </div>
 
@@ -70,7 +70,7 @@
           </label>
 
           <label class="field field-wide cloud-config-field">
-            <span class="field-label">Chave publica</span>
+            <span class="field-label">Chave pública</span>
             <input
               autocomplete="off"
               id="supabaseKeyInput"
@@ -103,7 +103,7 @@
 
         <div class="auth-actions">
           <button class="ghost-button sync-button" id="saveConfigButton" type="button">
-            Salvar conexao
+            Salvar conexão
           </button>
           <button class="primary-button primary-button-compact" id="passwordLoginButton" type="button">
             Entrar
@@ -122,7 +122,7 @@
         <div class="topbar-controls">
           <div class="period-grid">
             <label class="field field-inline">
-              <span class="field-label">Mes</span>
+              <span class="field-label">Mês</span>
               <select id="monthSelect" name="monthSelect"></select>
             </label>
 
@@ -148,32 +148,32 @@
           <span class="summary-label">Saldo atual</span>
           <strong class="summary-value" id="balanceValue">R$ 0,00</strong>
           <span class="summary-footnote" id="balanceHint">
-            Entradas menos saidas ate o periodo selecionado.
+            Entradas menos saídas até o período selecionado.
           </span>
         </article>
 
         <article class="summary-card summary-card-subtle tone-income">
           <span class="summary-label">Entradas</span>
           <strong class="summary-value" id="incomeValue">R$ 0,00</strong>
-          <span class="summary-footnote">No periodo.</span>
+          <span class="summary-footnote">No período.</span>
         </article>
 
         <article class="summary-card summary-card-subtle tone-expense">
-          <span class="summary-label">Saidas</span>
+          <span class="summary-label">Saídas</span>
           <strong class="summary-value" id="expenseValue">R$ 0,00</strong>
-          <span class="summary-footnote">No periodo.</span>
+          <span class="summary-footnote">No período.</span>
         </article>
 
         <article class="summary-card summary-card-wallet tone-emergency">
-          <span class="summary-label">Caixa de emergencia</span>
+          <span class="summary-label">Caixa de emergência</span>
           <strong class="summary-value" id="emergencyFundValue">R$ 0,00</strong>
-          <span class="summary-footnote">Lancado na categoria.</span>
+          <span class="summary-footnote">Lançado na categoria.</span>
         </article>
 
         <article class="summary-card summary-card-wallet tone-investments">
           <span class="summary-label">Investimentos</span>
           <strong class="summary-value" id="investmentsValue">R$ 0,00</strong>
-          <span class="summary-footnote">Lancado na categoria.</span>
+          <span class="summary-footnote">Lançado na categoria.</span>
         </article>
       </section>
 
@@ -181,15 +181,15 @@
         <article class="panel panel-compact reveal">
           <div class="panel-heading">
             <div>
-              <h2>Lancamento</h2>
+              <h2>Lançamento</h2>
             </div>
           </div>
 
           <form id="entryForm" class="entry-form">
-            <fieldset class="type-switch" aria-label="Tipo de lancamento">
+            <fieldset class="type-switch" aria-label="Tipo de lançamento">
               <label>
                 <input checked name="entryType" type="radio" value="expense" />
-                <span>Saida</span>
+                <span>Saída</span>
               </label>
               <label>
                 <input name="entryType" type="radio" value="income" />
@@ -243,7 +243,7 @@
               </label>
 
               <label class="field field-wide note-field">
-                <span class="field-label">Observacao</span>
+                <span class="field-label">Observação</span>
                 <input
                   id="noteInput"
                   maxlength="80"
@@ -268,7 +268,7 @@
               </label>
 
               <p class="plan-note" id="planHelper">
-                A movimentacao sera registrada apenas uma vez.
+                A movimentação será registrada apenas uma vez.
               </p>
             </div>
 
@@ -290,15 +290,15 @@
         <article class="panel panel-compact insights-panel reveal">
           <div class="panel-heading">
             <div>
-              <h2>Leitura rapida</h2>
+              <h2>Leitura rápida</h2>
             </div>
           </div>
 
           <div class="mini-chart">
             <div class="chart-header">
-              <h3>Ultimos 6 meses</h3>
+              <h3>Últimos 6 meses</h3>
             </div>
-            <div class="trend-bars" id="trendBars" aria-label="Grafico dos ultimos meses"></div>
+            <div class="trend-bars" id="trendBars" aria-label="Gráfico dos últimos meses"></div>
           </div>
         </article>
       </section>
@@ -322,7 +322,7 @@
           <section class="commitment-column">
             <div class="commitment-header">
               <h3>Parcelamentos</h3>
-              <p>Compras divididas que continuam aparecendo nos proximos meses.</p>
+              <p>Compras divididas que continuam aparecendo nos próximos meses.</p>
             </div>
             <div class="commitment-list" id="installmentList"></div>
           </section>
@@ -332,20 +332,20 @@
       <section class="panel reveal">
         <div class="panel-heading">
           <div>
-            <h2>Seus lancamentos</h2>
+            <h2>Seus lançamentos</h2>
           </div>
 
           <div class="filters">
             <label class="field field-compact">
               <span class="field-label">Buscar</span>
-              <input id="searchInput" placeholder="Categoria ou observacao" type="search" />
+              <input id="searchInput" placeholder="Categoria ou observação" type="search" />
             </label>
 
             <label class="field field-compact">
               <span class="field-label">Tipo</span>
               <select id="typeFilter">
                 <option value="all">Todos</option>
-                <option value="expense">Saidas</option>
+                <option value="expense">Saídas</option>
                 <option value="income">Entradas</option>
               </select>
             </label>

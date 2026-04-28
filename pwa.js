@@ -14,7 +14,7 @@ function updateThemeButton(button) {
   const isDark = document.documentElement.dataset.theme === "dark";
   button.innerHTML = isDark
     ? '<span class="theme-icon" aria-hidden="true">&#9728;</span><span class="theme-label">Modo claro</span>'
-    : '<span class="theme-icon" aria-hidden="true">&#9790;</span><span class="theme-label">Modo dark</span>';
+    : '<span class="theme-icon" aria-hidden="true">&#9790;</span><span class="theme-label">Modo escuro</span>';
   button.setAttribute("aria-pressed", String(isDark));
 }
 
@@ -38,7 +38,7 @@ window.addEventListener("DOMContentLoaded", () => {
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
     navigator.serviceWorker.register("./sw.js").catch((error) => {
-      console.warn("Nao foi possivel ativar o modo app.", error);
+      console.warn("Não foi possível ativar o modo app.", error);
     });
   });
 }

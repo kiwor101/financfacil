@@ -1,29 +1,29 @@
 # FinancFacil
 
-Controle financeiro pessoal simples, responsivo e pensado para uso diario no celular e no computador.
+Controle financeiro pessoal simples, responsivo e pensado para uso diário no celular e no computador.
 
-> Projeto em desenvolvimento. A aplicacao ja possui uma versao funcional, mas ainda esta recebendo melhorias de interface, experiencia de uso, sincronizacao e organizacao dos dados.
+> Projeto em desenvolvimento. A aplicação já possui uma versão funcional, mas ainda está recebendo melhorias de interface, experiência de uso, sincronização e organização dos dados.
 
 ## Sobre o projeto
 
-O FinancFacil nasceu com a ideia de ser um controle financeiro pratico, sem depender de planilhas complexas. O foco e registrar entradas, saidas, contas fixas, compras parceladas e acompanhar o saldo atual de forma rapida.
+O FinancFacil nasceu com a ideia de ser um controle financeiro prático, sem depender de planilhas complexas. O foco é registrar entradas, saídas, contas fixas, compras parceladas e acompanhar o saldo atual de forma rápida.
 
-A proposta e manter uma interface compacta, limpa e facil de usar no dia a dia, principalmente pelo celular.
+A proposta é manter uma interface compacta, limpa e fácil de usar no dia a dia, principalmente pelo celular.
 
 ## Funcionalidades atuais
 
-- Saldo atual calculado a partir das entradas e saidas.
-- Controle separado para caixa de emergencia e investimentos.
-- Cadastro de entradas e saidas por categoria.
+- Saldo atual calculado a partir das entradas e saídas.
+- Controle separado para caixa de emergência e investimentos.
+- Cadastro de entradas e saídas por categoria.
 - Campo personalizado para categorias do tipo `Outros`.
 - Compras parceladas refletindo nos meses seguintes.
 - Contas fixas mensais.
-- Edicao e exclusao de lancamentos.
-- Historico com busca e filtro.
+- Edição e exclusão de lançamentos.
+- Histórico com busca e filtro.
 - Login com e-mail e senha.
-- Sincronizacao entre dispositivos usando Supabase.
+- Sincronização entre dispositivos usando Supabase.
 - Modo claro e modo escuro.
-- Suporte a instalacao como PWA.
+- Suporte a instalação como PWA.
 
 ## Tecnologias
 
@@ -37,27 +37,27 @@ A proposta e manter uma interface compacta, limpa e facil de usar no dia a dia, 
 
 ## Status
 
-Este projeto ainda esta em desenvolvimento ativo.
+Este projeto ainda está em desenvolvimento ativo.
 
 Prioridades atuais:
 
-- melhorar a experiencia no celular;
+- melhorar a experiência no celular;
 - refinar o visual da dashboard;
-- evoluir os graficos e resumos;
-- melhorar fluxos de login e sincronizacao;
-- preparar uma versao futura para app mobile.
+- evoluir os gráficos e resumos;
+- melhorar fluxos de login e sincronização;
+- preparar uma versão futura para app mobile.
 
 ## Como rodar localmente
 
-Por ser um projeto estatico, basta abrir o arquivo `index.html` no navegador.
+Por ser um projeto estático, basta abrir o arquivo `index.html` no navegador.
 
-Para testar login, sincronizacao e PWA com mais fidelidade, o ideal e usar a versao publicada no GitHub Pages.
+Para testar login, sincronização e PWA com mais fidelidade, o ideal é usar a versão publicada no GitHub Pages.
 
-## Configuracao do Supabase
+## Configuração do Supabase
 
 1. Crie um projeto no Supabase.
 2. Rode o arquivo `supabase-setup.sql` no SQL Editor.
-3. Copie a URL do projeto e a chave publica.
+3. Copie a URL do projeto e a chave pública.
 4. Configure o arquivo `supabase-config.js`.
 
 Exemplo:
@@ -65,13 +65,13 @@ Exemplo:
 ```js
 window.FLUXO_SUPABASE_CONFIG = window.FLUXO_SUPABASE_CONFIG || {
   url: "https://seu-projeto.supabase.co",
-  anonKey: "sua-chave-publica",
+  anonKey: "sua-chave-do-supabase",
 };
 ```
 
-Use somente a chave publica do Supabase, como `publishable key` ou `anon key`.
+Use somente a chave pública do Supabase, como `publishable key` ou `anon key`.
 
-Nunca coloque `secret key` ou `service_role` no projeto, porque essas chaves nao devem ir para o navegador nem para o GitHub.
+Nunca coloque `secret key` ou `service_role` no projeto, porque essas chaves não devem ir para o navegador nem para o GitHub.
 
 ## Estrutura principal
 
@@ -90,18 +90,18 @@ Nunca coloque `secret key` ou `service_role` no projeto, porque essas chaves nao
 |-- icon.svg
 ```
 
-## Seguranca
+## Segurança
 
-O app usa Supabase Auth e Row Level Security para separar os dados por usuario.
+O app usa Supabase Auth e Row Level Security para separar os dados por usuário.
 
-A chave publica do Supabase pode ficar no frontend, desde que as tabelas estejam protegidas com RLS e politicas corretas.
+A chave pública do Supabase pode ficar no frontend, desde que as tabelas estejam protegidas com RLS e políticas corretas.
 
 ## Roadmap
 
-- Melhorar os graficos financeiros.
-- Criar mais opcoes de resumo mensal.
+- Melhorar os gráficos financeiros.
+- Criar mais opções de resumo mensal.
 - Refinar design mobile-first.
-- Melhorar onboarding de novos usuarios.
+- Melhorar onboarding de novos usuários.
 - Preparar empacotamento futuro para Android.
 
 ## Marca

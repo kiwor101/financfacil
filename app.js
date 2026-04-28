@@ -6,7 +6,7 @@ const LEGACY_CAPTURE_DONE_KEY = "fluxo-leve-legacy-capture-done-v1";
 const CLOUD_REFRESH_INTERVAL_MS = 45000;
 const MAX_INSTALLMENTS = 1200;
 const ALLOCATION_CATEGORIES = {
-  emergencyFund: "Caixa de emergencia",
+  emergencyFund: "Caixa de emergência",
   investments: "Investimentos",
   investmentWithdrawal: "Saque investimentos",
 };
@@ -20,19 +20,19 @@ const CLOUD_TABLES = {
 const categories = {
   expense: [
     "Moradia",
-    "Alimentacao",
+    "Alimentação",
     "Transporte",
-    "Saude",
+    "Saúde",
     "Lazer",
-    "Educacao",
-    "Cartao de credito",
+    "Educação",
+    "Cartão de crédito",
     "Imprevistos",
     ALLOCATION_CATEGORIES.emergencyFund,
     ALLOCATION_CATEGORIES.investmentWithdrawal,
     "Outros",
   ],
   income: [
-    "Salario",
+    "Salário",
     "Freela",
     "Presentes",
     ALLOCATION_CATEGORIES.emergencyFund,
@@ -59,7 +59,7 @@ const monthNamesShort = [
 const monthNamesLong = [
   "Janeiro",
   "Fevereiro",
-  "Marco",
+  "Março",
   "Abril",
   "Maio",
   "Junho",
@@ -160,8 +160,8 @@ ensureLegacyImportSnapshot();
 bootstrap().catch((error) => {
   console.error("Falha ao iniciar o app.", error);
   setSyncNotice(
-    "Atencao",
-    "O app abriu, mas houve um problema ao preparar a sincronizacao.",
+    "Atenção",
+    "O app abriu, mas houve um problema ao preparar a sincronização.",
     "error",
   );
 });
@@ -274,7 +274,7 @@ function renderAuthUI() {
   });
 
   elements.toggleAuthButton.textContent = getToggleButtonLabel();
-  elements.saveConfigButton.textContent = configured ? "Atualizar conexao" : "Salvar conexao";
+  elements.saveConfigButton.textContent = configured ? "Atualizar conexão" : "Salvar conexão";
 
   if (currentUser?.email && elements.authEmailInput.value.trim() !== currentUser.email) {
     elements.authEmailInput.value = currentUser.email;
@@ -302,7 +302,7 @@ function setLocalModeNotice(message) {
   if (!hasSupabaseConfig()) {
     setSyncNotice(
       "Modo local",
-      message || "Seus dados continuam salvos so neste aparelho ate configurar o Supabase.",
+      message || "Seus dados continuam salvos só neste aparelho até configurar o Supabase.",
       "muted",
     );
     return;
@@ -329,8 +329,8 @@ async function initializeCloud() {
 async function initializeSupabaseClient(config) {
   if (!window.supabase || typeof window.supabase.createClient !== "function") {
     setSyncNotice(
-      "Atencao",
-      "A biblioteca do Supabase nao carregou. Abra a pagina com internet para ativar a nuvem.",
+      "Atenção",
+      "A biblioteca do Supabase não carregou. Abra a página com internet para ativar a nuvem.",
       "error",
     );
     return;
@@ -374,7 +374,7 @@ async function initializeSupabaseClient(config) {
 
     handleSignedOutSession({ preserveLegacyImport: true });
   } catch (error) {
-    handleCloudError("Nao consegui validar a conexao com o Supabase.", error);
+    handleCloudError("Não consegui validar a conexão com o Supabase.", error);
   }
 }
 
@@ -473,7 +473,7 @@ async function loadCloudState({ migrateLegacy = false, quiet = false } = {}) {
     setSyncNotice("Sincronizado", getSyncedMessage(), "success");
   })()
     .catch((error) => {
-      handleCloudError("Nao consegui carregar seus dados da nuvem.", error);
+      handleCloudError("Não consegui carregar seus dados da nuvem.", error);
     })
     .finally(() => {
       cloudReloadPromise = null;
@@ -704,8 +704,8 @@ async function handleSaveConfig() {
   if (!hasSupabaseConfig(config)) {
     authPanelOpen = true;
     setSyncNotice(
-      "Atencao",
-      "Preencha a URL do projeto e a chave publica do Supabase.",
+      "Atenção",
+      "Preencha a URL do projeto e a chave pública do Supabase.",
       "warning",
     );
     return;
@@ -719,8 +719,8 @@ async function handleSaveConfig() {
 
     if (!currentUser) {
       setSyncNotice(
-        "Conexao salva",
-        "Agora basta entrar com seu e-mail para ativar a sincronizacao.",
+        "Conexão salva",
+        "Agora basta entrar com seu e-mail para ativar a sincronização.",
         "success",
       );
     }
@@ -765,7 +765,7 @@ async function handlePasswordLogin() {
 
     setSyncNotice("Sincronizando", "Entrada feita. Buscando seus dados...", "warning");
   } catch (error) {
-    handleCloudError("Nao consegui entrar com esse e-mail e senha.", error);
+    handleCloudError("Não consegui entrar com esse e-mail e senha.", error);
   } finally {
     setAuthBusy(false);
   }
@@ -790,7 +790,7 @@ async function handleSignOut() {
       "muted",
     );
   } catch (error) {
-    handleCloudError("Nao consegui sair da conta.", error);
+    handleCloudError("Não consegui sair da conta.", error);
   } finally {
     setAuthBusy(false);
   }
@@ -840,8 +840,8 @@ function validatePasswordCredentials(credentials, config) {
   if (!hasSupabaseConfig(config)) {
     authPanelOpen = true;
     setSyncNotice(
-      "Atencao",
-      "Salve primeiro a URL do projeto e a chave publica do Supabase.",
+      "Atenção",
+      "Salve primeiro a URL do projeto e a chave pública do Supabase.",
       "warning",
     );
     return false;
@@ -849,13 +849,13 @@ function validatePasswordCredentials(credentials, config) {
 
   if (!credentials.email) {
     authPanelOpen = true;
-    setSyncNotice("Atencao", "Digite o e-mail da sua conta.", "warning");
+    setSyncNotice("Atenção", "Digite o e-mail da sua conta.", "warning");
     return false;
   }
 
   if (!credentials.password || credentials.password.length < 6) {
     authPanelOpen = true;
-    setSyncNotice("Atencao", "Digite uma senha com pelo menos 6 caracteres.", "warning");
+    setSyncNotice("Atenção", "Digite uma senha com pelo menos 6 caracteres.", "warning");
     return false;
   }
 
@@ -905,13 +905,13 @@ function getFooterSyncText() {
   }
 
   return lastCloudSyncAt
-    ? `Ultima atualizacao ${timeFormatter.format(lastCloudSyncAt)}.`
-    : "Sincronizacao pronta.";
+    ? `Última atualização ${timeFormatter.format(lastCloudSyncAt)}.`
+    : "Sincronização pronta.";
 }
 
 function handleCloudError(prefix, error) {
   console.error(error);
-  setSyncNotice("Atencao", `${prefix} ${formatCloudError(error)}`, "error");
+  setSyncNotice("Atenção", `${prefix} ${formatCloudError(error)}`, "error");
 }
 
 function formatCloudError(error) {
@@ -922,7 +922,7 @@ function formatCloudError(error) {
   }
 
   if (message.includes("row-level security")) {
-    return "As regras de seguranca do banco ainda nao estao prontas.";
+    return "As regras de segurança do banco ainda não estão prontas.";
   }
 
   if (message.includes("email rate limit")) {
@@ -930,14 +930,14 @@ function formatCloudError(error) {
   }
 
   if (message.includes("invalid api key")) {
-    return "Confira se a chave publica copiada e a anon key do projeto.";
+    return "Confira se a chave pública copiada é a anon key do projeto.";
   }
 
   if (message.includes("invalid url")) {
-    return "Confira se a URL do projeto esta correta.";
+    return "Confira se a URL do projeto está correta.";
   }
 
-  return "Confira a configuracao do projeto e tente de novo.";
+  return "Confira a configuração do projeto e tente de novo.";
 }
 
 function readSupabaseConfigInputs() {
@@ -962,7 +962,7 @@ function loadSupabaseConfig() {
       anonKey: stored.anonKey || embedded.anonKey,
     };
   } catch (error) {
-    console.warn("Nao foi possivel recuperar a configuracao do Supabase.", error);
+    console.warn("Não foi possível recuperar a configuração do Supabase.", error);
     return embedded;
   }
 }
@@ -1023,7 +1023,7 @@ function loadState() {
       balances: normalizeBalances(parsed.balances),
     };
   } catch (error) {
-    console.warn("Nao foi possivel recuperar os dados salvos.", error);
+    console.warn("Não foi possível recuperar os dados salvos.", error);
     return fallbackState;
   }
 }
@@ -1038,6 +1038,31 @@ function normalizeBalances(balances) {
 function normalizeMoneyValue(value) {
   const numberValue = Number(value);
   return Number.isFinite(numberValue) && numberValue > 0 ? numberValue : 0;
+}
+
+function normalizeCategoryLabel(category) {
+  const value = String(category || "").trim();
+  const normalized = normalizeCategoryKey(value);
+  const labels = {
+    alimentacao: "Alimentação",
+    saude: "Saúde",
+    educacao: "Educação",
+    cartaodecredito: "Cartão de crédito",
+    salario: "Salário",
+    caixadeemergencia: ALLOCATION_CATEGORIES.emergencyFund,
+    saqueinvestimentos: ALLOCATION_CATEGORIES.investmentWithdrawal,
+    investimentos: ALLOCATION_CATEGORIES.investments,
+  };
+
+  return labels[normalized] || value || "Outros";
+}
+
+function normalizeCategoryKey(category) {
+  return String(category || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, "");
 }
 
 function saveState() {
@@ -1068,7 +1093,7 @@ function ensureLegacyImportSnapshot() {
 
     localStorage.setItem(LEGACY_CAPTURE_DONE_KEY, "done");
   } catch (error) {
-    console.warn("Nao foi possivel preparar a migracao local para nuvem.", error);
+    console.warn("Não foi possível preparar a migração local para nuvem.", error);
     localStorage.setItem(LEGACY_CAPTURE_DONE_KEY, "done");
   }
 }
@@ -1090,7 +1115,7 @@ function loadLegacyImportState() {
         : [],
     };
   } catch (error) {
-    console.warn("Nao foi possivel ler os dados locais para migracao.", error);
+    console.warn("Não foi possível ler os dados locais para migração.", error);
     return null;
   }
 }
@@ -1109,7 +1134,7 @@ function normalizeTransaction(entry) {
     id: entry.id || crypto.randomUUID(),
     type: entry.type === "income" ? "income" : "expense",
     amount,
-    category: String(entry.category || "Outros"),
+    category: normalizeCategoryLabel(entry.category || "Outros"),
     date: String(entry.date),
     note: String(entry.note || ""),
     source: entry.source === "installment" ? "installment" : "single",
@@ -1133,7 +1158,7 @@ function normalizeRecurringRule(rule) {
     id: rule.id || crypto.randomUUID(),
     type: rule.type === "income" ? "income" : "expense",
     amount,
-    category: String(rule.category || "Outros"),
+    category: normalizeCategoryLabel(rule.category || "Outros"),
     startDate: String(rule.startDate),
     note: String(rule.note || ""),
     endMonth: rule.endMonth ? String(rule.endMonth) : null,
@@ -1320,17 +1345,17 @@ function getPlanHelperText() {
     const durationText = formatInstallmentDuration(installments);
     if (amount > 0) {
       const installmentAmount = splitAmountAcrossInstallments(amount, installments)[0];
-      return `A compra sera dividida em ${installments}x de ${formatCurrency(installmentAmount)} (${durationText}) a partir de ${formatMonthLabel(date.slice(0, 7))}.`;
+      return `A compra será dividida em ${installments}x de ${formatCurrency(installmentAmount)} (${durationText}) a partir de ${formatMonthLabel(date.slice(0, 7))}.`;
     }
 
-    return `A compra sera dividida e repetida pelos proximos ${durationText}.`;
+    return `A compra será dividida e repetida pelos próximos ${durationText}.`;
   }
 
   if (planType === "recurring") {
-    return `Essa movimentacao vai reaparecer todo mes a partir de ${formatMonthLabel(date.slice(0, 7))}.`;
+    return `Essa movimentação vai reaparecer todo mês a partir de ${formatMonthLabel(date.slice(0, 7))}.`;
   }
 
-  return "A movimentacao sera registrada apenas uma vez.";
+  return "A movimentação será registrada apenas uma vez.";
 }
 
 async function handleEntrySubmit(event) {
@@ -1370,7 +1395,7 @@ async function handleEntrySubmit(event) {
     setEntryBusy(true);
 
     if (shouldUseCloudPersistence()) {
-      setSyncNotice("Sincronizando", "Salvando seu lancamento na nuvem...", "warning");
+      setSyncNotice("Sincronizando", "Salvando seu lançamento na nuvem...", "warning");
       if (nextTransactions.length > 0) {
         await upsertCloudTransactions(nextTransactions);
       }
@@ -1398,10 +1423,10 @@ async function handleEntrySubmit(event) {
     if (shouldUseCloudPersistence()) {
       setSyncNotice("Sincronizado", getSyncedMessage(), "success");
     } else {
-      setLocalModeNotice("Lancamento salvo neste aparelho.");
+      setLocalModeNotice("Lançamento salvo neste aparelho.");
     }
   } catch (error) {
-    handleCloudError("Nao consegui salvar o lancamento.", error);
+    handleCloudError("Não consegui salvar o lançamento.", error);
   } finally {
     entryBusy = false;
     setEntryBusy(false);
@@ -1416,7 +1441,7 @@ function getSubmittedCategory(formData) {
     return customCategory || "Outros";
   }
 
-  return category;
+  return normalizeCategoryLabel(category);
 }
 
 async function handleEntryEditSubmit({ type, amount, category, date, note }) {
@@ -1447,10 +1472,10 @@ async function handleEntryEditSubmit({ type, amount, category, date, note }) {
     if (shouldUseCloudPersistence()) {
       setSyncNotice("Sincronizado", getSyncedMessage(), "success");
     } else {
-      setLocalModeNotice("Edicao salva neste aparelho.");
+      setLocalModeNotice("Edição salva neste aparelho.");
     }
   } catch (error) {
-    handleCloudError("Nao consegui salvar a edicao.", error);
+    handleCloudError("Não consegui salvar a edição.", error);
   } finally {
     entryBusy = false;
     setEntryBusy(false);
@@ -1473,7 +1498,7 @@ async function updateSingleTransaction(entryId, { type, amount, category, date, 
   };
 
   if (shouldUseCloudPersistence()) {
-    setSyncNotice("Sincronizando", "Atualizando lancamento na nuvem...", "warning");
+    setSyncNotice("Sincronizando", "Atualizando lançamento na nuvem...", "warning");
     await upsertCloudTransactions([updatedEntry]);
     lastCloudSyncAt = new Date();
   }
@@ -1538,7 +1563,7 @@ function setEntryBusy(isBusy) {
   elements.submitButton.textContent = isBusy
     ? "Salvando..."
     : editingEntry
-      ? "Salvar edicao"
+      ? "Salvar edição"
       : "Salvar";
 }
 
@@ -1649,16 +1674,17 @@ function fillEntryFormForEdit({ type, amount, category, date, note, planType, in
   elements.planTypeInput.disabled = true;
   elements.installmentsInput.value = String(installments || 2);
   elements.cancelEditButton.hidden = false;
-  elements.submitButton.textContent = "Salvar edicao";
+  elements.submitButton.textContent = "Salvar edição";
   updatePlanModeUI();
   elements.amountInput.focus();
 }
 
 function setCategoryValue(category) {
+  const normalizedCategory = normalizeCategoryLabel(category);
   const availableCategories = Array.from(elements.categoryInput.options).map((option) => option.value);
 
-  if (availableCategories.includes(category)) {
-    elements.categoryInput.value = category;
+  if (availableCategories.includes(normalizedCategory)) {
+    elements.categoryInput.value = normalizedCategory;
     elements.categoryCustomInput.value = "";
   } else {
     elements.categoryInput.value = "Outros";
@@ -1705,7 +1731,7 @@ function formatInstallmentDuration(installments) {
     return yearText;
   }
 
-  const monthText = months === 1 ? "1 mes" : `${months} meses`;
+  const monthText = months === 1 ? "1 mês" : `${months} meses`;
   return `${yearText} e ${monthText}`;
 }
 
@@ -1734,8 +1760,8 @@ function renderSummary() {
   elements.investmentsValue.textContent = formatCurrency(investmentsBalance);
   elements.balanceHint.textContent =
     currentBalance >= 0
-      ? `Disponivel apos reserva e investimentos ate ${formatMonthLabel(state.selectedMonth)}.`
-      : `Saldo negativo de ${formatCurrency(Math.abs(currentBalance))} ate ${formatMonthLabel(state.selectedMonth)}.`;
+      ? `Disponível após reserva e investimentos até ${formatMonthLabel(state.selectedMonth)}.`
+      : `Saldo negativo de ${formatCurrency(Math.abs(currentBalance))} até ${formatMonthLabel(state.selectedMonth)}.`;
 }
 
 function renderCommitments() {
@@ -1750,7 +1776,7 @@ function renderRecurringList() {
 
   if (activeRules.length === 0) {
     elements.recurringList.innerHTML =
-      '<div class="empty-state">Nenhuma conta fixa ativa para este periodo.</div>';
+      '<div class="empty-state">Nenhuma conta fixa ativa para este período.</div>';
     return;
   }
 
@@ -1761,7 +1787,7 @@ function renderRecurringList() {
     item.innerHTML = `
       <strong>${escapeHtml(rule.note || rule.category)}</strong>
       <p class="commitment-meta">
-        ${escapeHtml(rule.category)} - ${formatCurrency(rule.amount)} por mes
+        ${escapeHtml(rule.category)} - ${formatCurrency(rule.amount)} por mês
       </p>
       <p class="commitment-meta">
         Ativa desde ${formatMonthLabel(rule.startDate.slice(0, 7))}
@@ -1796,7 +1822,7 @@ function renderInstallmentList() {
 
   if (activeGroups.length === 0) {
     elements.installmentList.innerHTML =
-      '<div class="empty-state">Nenhum parcelamento em andamento para este periodo.</div>';
+      '<div class="empty-state">Nenhum parcelamento em andamento para este período.</div>';
     return;
   }
 
@@ -1810,7 +1836,7 @@ function renderInstallmentList() {
         ${escapeHtml(group.category)} - ${group.totalInstallments}x de ${formatCurrency(group.referenceAmount)}
       </p>
       <p class="commitment-meta">
-        ${group.paidCount} paga(s), ${group.remainingCount} restante(s) - proxima em ${formatMonthLabel(group.nextMonth)}
+        ${group.paidCount} paga(s), ${group.remainingCount} restante(s) - próxima em ${formatMonthLabel(group.nextMonth)}
       </p>
       <div class="commitment-actions">
         <button class="ghost-button" data-edit-group="${group.id}" type="button">
@@ -1851,7 +1877,7 @@ function renderEntries() {
   if (filteredEntries.length === 0) {
     elements.entryList.innerHTML = `
       <div class="empty-state">
-        Nenhum lancamento encontrado para esse filtro. Tente outra busca ou mude o periodo.
+        Nenhum lançamento encontrado para esse filtro. Tente outra busca ou mude o período.
       </div>
     `;
     return;
@@ -1873,13 +1899,13 @@ function renderEntries() {
 
     const typePill = node.querySelector(".entry-type-pill");
     typePill.dataset.type = entry.type;
-    typePill.textContent = entry.type === "expense" ? "Saida" : "Entrada";
+    typePill.textContent = entry.type === "expense" ? "Saída" : "Entrada";
 
     const planPill = node.querySelector(".entry-plan-pill");
     if (allocationKind) {
       planPill.hidden = false;
       planPill.dataset.plan = allocationKind;
-      planPill.textContent = allocationKind === "emergency" ? "Emergencia" : "Investimentos";
+      planPill.textContent = allocationKind === "emergency" ? "Emergência" : "Investimentos";
     } else if (entry.source === "single") {
       planPill.hidden = true;
     } else {
@@ -1941,8 +1967,8 @@ function renderTrend() {
       <span class="trend-label">${formatMonthLabel(item.month)}</span>
       <div class="trend-lines">
         <span class="trend-line income" style="width: ${incomeWidth}%" title="Entradas ${formatCurrency(item.income)}"></span>
-        <span class="trend-line expense" style="width: ${expenseWidth}%" title="Saidas ${formatCurrency(item.expense)}"></span>
-        <span class="trend-line emergency" style="width: ${emergencyWidth}%" title="Emergencia ${formatCurrency(item.emergency)}"></span>
+        <span class="trend-line expense" style="width: ${expenseWidth}%" title="Saídas ${formatCurrency(item.expense)}"></span>
+        <span class="trend-line emergency" style="width: ${emergencyWidth}%" title="Emergência ${formatCurrency(item.emergency)}"></span>
         <span class="trend-line investments" style="width: ${investmentsWidth}%" title="Investimentos ${formatCurrency(item.investments)}"></span>
       </div>
     `;
@@ -1954,8 +1980,8 @@ function renderTrend() {
   const summary = document.createElement("div");
   summary.className = "quick-wallet-summary";
   summary.innerHTML = `
-    <span data-wallet="emergency">Emergencia no mes: ${formatCurrency(sumAllocationsByKind(currentEntries, "emergency"))}</span>
-    <span data-wallet="investments">Investimentos no mes: ${formatCurrency(sumAllocationsByKind(currentEntries, "investments"))}</span>
+    <span data-wallet="emergency">Emergência no mês: ${formatCurrency(sumAllocationsByKind(currentEntries, "emergency"))}</span>
+    <span data-wallet="investments">Investimentos no mês: ${formatCurrency(sumAllocationsByKind(currentEntries, "investments"))}</span>
   `;
   elements.trendBars.append(summary);
 }
@@ -1978,7 +2004,7 @@ async function handleEntryDelete(entry) {
 
       lastCloudSyncAt = new Date();
     } catch (error) {
-      handleCloudError("Nao consegui atualizar esse lancamento.", error);
+      handleCloudError("Não consegui atualizar esse lançamento.", error);
       return;
     }
   }
@@ -2005,7 +2031,7 @@ async function handleEntryDelete(entry) {
   if (shouldUseCloudPersistence()) {
     setSyncNotice("Sincronizado", getSyncedMessage(), "success");
   } else {
-    setLocalModeNotice("Lancamento removido deste aparelho.");
+    setLocalModeNotice("Lançamento removido deste aparelho.");
   }
 }
 
@@ -2023,7 +2049,7 @@ async function stopRecurringRule(ruleId, monthString, syncCloud = true) {
       await stopCloudRecurringRule(rule, monthString);
       lastCloudSyncAt = new Date();
     } catch (error) {
-      handleCloudError("Nao consegui encerrar a conta fixa.", error);
+      handleCloudError("Não consegui encerrar a conta fixa.", error);
       return;
     }
   }
@@ -2053,7 +2079,7 @@ async function cancelInstallmentGroup(groupId, fromMonth, syncCloud = true) {
       await cancelCloudInstallmentGroup(groupId, fromMonth);
       lastCloudSyncAt = new Date();
     } catch (error) {
-      handleCloudError("Nao consegui cancelar as parcelas restantes.", error);
+      handleCloudError("Não consegui cancelar as parcelas restantes.", error);
       return;
     }
   }
@@ -2257,13 +2283,15 @@ function isAllocationEntry(entry) {
 }
 
 function getAllocationKind(entry) {
-  if (entry.category === ALLOCATION_CATEGORIES.emergencyFund) {
+  const categoryKey = normalizeCategoryKey(entry.category);
+
+  if (categoryKey === normalizeCategoryKey(ALLOCATION_CATEGORIES.emergencyFund)) {
     return "emergency";
   }
 
   if (
-    entry.category === ALLOCATION_CATEGORIES.investments ||
-    entry.category === ALLOCATION_CATEGORIES.investmentWithdrawal
+    categoryKey === normalizeCategoryKey(ALLOCATION_CATEGORIES.investments) ||
+    categoryKey === normalizeCategoryKey(ALLOCATION_CATEGORIES.investmentWithdrawal)
   ) {
     return "investments";
   }
@@ -2272,15 +2300,17 @@ function getAllocationKind(entry) {
 }
 
 function getCurrentBalanceImpact(entry) {
-  if (entry.category === ALLOCATION_CATEGORIES.emergencyFund) {
-    return entry.type === "income" ? entry.amount : -entry.amount;
+  const categoryKey = normalizeCategoryKey(entry.category);
+
+  if (categoryKey === normalizeCategoryKey(ALLOCATION_CATEGORIES.emergencyFund)) {
+    return entry.type === "income" ? -entry.amount : entry.amount;
   }
 
-  if (entry.category === ALLOCATION_CATEGORIES.investments) {
+  if (categoryKey === normalizeCategoryKey(ALLOCATION_CATEGORIES.investments)) {
     return -entry.amount;
   }
 
-  if (entry.category === ALLOCATION_CATEGORIES.investmentWithdrawal) {
+  if (categoryKey === normalizeCategoryKey(ALLOCATION_CATEGORIES.investmentWithdrawal)) {
     return entry.amount;
   }
 
@@ -2288,15 +2318,17 @@ function getCurrentBalanceImpact(entry) {
 }
 
 function getAllocationBalanceImpact(entry) {
-  if (entry.category === ALLOCATION_CATEGORIES.emergencyFund) {
-    return entry.type === "income" ? -entry.amount : entry.amount;
+  const categoryKey = normalizeCategoryKey(entry.category);
+
+  if (categoryKey === normalizeCategoryKey(ALLOCATION_CATEGORIES.emergencyFund)) {
+    return entry.type === "income" ? entry.amount : -entry.amount;
   }
 
-  if (entry.category === ALLOCATION_CATEGORIES.investments) {
+  if (categoryKey === normalizeCategoryKey(ALLOCATION_CATEGORIES.investments)) {
     return entry.amount;
   }
 
-  if (entry.category === ALLOCATION_CATEGORIES.investmentWithdrawal) {
+  if (categoryKey === normalizeCategoryKey(ALLOCATION_CATEGORIES.investmentWithdrawal)) {
     return -entry.amount;
   }
 
@@ -2379,10 +2411,10 @@ function getFallbackNote(entry) {
   }
 
   if (entry.source === "recurring") {
-    return "Lancamento fixo do mes";
+    return "Lançamento fixo do mês";
   }
 
-  return "Sem observacao";
+  return "Sem observação";
 }
 
 function compareTransactionsDesc(left, right) {

@@ -51,7 +51,7 @@ function bootstrap() {
     setBusy(true);
     renderMode();
     setMessage(
-      "A conexao com Supabase nao esta configurada. Confira o arquivo supabase-config.js.",
+      "A conexão com Supabase não está configurada. Confira o arquivo supabase-config.js.",
       "error",
     );
     return;
@@ -60,7 +60,7 @@ function bootstrap() {
   if (!window.supabase || typeof window.supabase.createClient !== "function") {
     setBusy(true);
     renderMode();
-    setMessage("Nao consegui carregar a biblioteca do Supabase. Confira sua internet.", "error");
+    setMessage("Não consegui carregar a biblioteca do Supabase. Confira sua internet.", "error");
     return;
   }
 
@@ -68,7 +68,7 @@ function bootstrap() {
   state.supabaseClient.auth.onAuthStateChange((event) => {
     if (event === "PASSWORD_RECOVERY") {
       setMode("nova-senha");
-      setMessage("Digite uma nova senha para concluir a recuperacao.", "success");
+      setMessage("Digite uma nova senha para concluir a recuperação.", "success");
     }
   });
 
@@ -141,7 +141,7 @@ async function handleSignup(event) {
       "success",
     );
   } catch (error) {
-    setMessage(formatAuthError(error, "Nao consegui criar a conta."), "error");
+    setMessage(formatAuthError(error, "Não consegui criar a conta."), "error");
   } finally {
     setBusy(false);
   }
@@ -183,7 +183,7 @@ async function handleProfileSave(event) {
     hydrateProfile();
     setMessage("Conta atualizada com sucesso.", "success");
   } catch (error) {
-    setMessage(formatAuthError(error, "Nao consegui atualizar a conta."), "error");
+    setMessage(formatAuthError(error, "Não consegui atualizar a conta."), "error");
   } finally {
     setBusy(false);
   }
@@ -208,9 +208,9 @@ async function handleRecovery(event) {
     }
 
     localStorage.setItem(AUTH_EMAIL_KEY, email);
-    setMessage("E-mail de recuperacao enviado. Confira sua caixa de entrada.", "success");
+    setMessage("E-mail de recuperação enviado. Confira sua caixa de entrada.", "success");
   } catch (error) {
-    setMessage(formatAuthError(error, "Nao consegui enviar a recuperacao."), "error");
+    setMessage(formatAuthError(error, "Não consegui enviar a recuperação."), "error");
   } finally {
     setBusy(false);
   }
@@ -241,7 +241,7 @@ async function handleNewPassword(event) {
       window.location.href = "./index.html";
     }, 900);
   } catch (error) {
-    setMessage(formatAuthError(error, "Nao consegui atualizar sua senha."), "error");
+    setMessage(formatAuthError(error, "Não consegui atualizar sua senha."), "error");
   } finally {
     setBusy(false);
   }
@@ -271,13 +271,13 @@ function renderMode() {
     elements.title.textContent = "Minha conta";
     elements.subtitle.textContent = "Atualize seu nome ou senha.";
     hydrateProfile();
-    setMessage("Essas informacoes ficam salvas na sua conta.", "muted");
+    setMessage("Essas informações ficam salvas na sua conta.", "muted");
     return;
   }
 
   if (mode === "recuperar") {
     elements.title.textContent = "Recuperar senha";
-    elements.subtitle.textContent = "Informe seu e-mail para receber o link de recuperacao.";
+    elements.subtitle.textContent = "Informe seu e-mail para receber o link de recuperação.";
     setMessage("Use o e-mail cadastrado na sua conta.", "muted");
     return;
   }
@@ -292,7 +292,7 @@ function renderMode() {
   elements.title.textContent = "Criar conta";
   elements.subtitle.textContent =
     "Use um e-mail e senha para acessar seus dados no celular e no computador.";
-  setMessage("Se ja tiver conta, volte para o app e entre com e-mail e senha.", "muted");
+  setMessage("Se já tiver conta, volte para o app e entre com e-mail e senha.", "muted");
 }
 
 function setBusy(isBusy, label = "") {
@@ -305,7 +305,7 @@ function setBusy(isBusy, label = "") {
   elements.profileButton.textContent = isBusy && state.mode === "perfil" ? label : "Salvar conta";
   elements.signupButton.textContent = isBusy && state.mode === "criar" ? label : "Criar conta";
   elements.recoveryButton.textContent =
-    isBusy && state.mode === "recuperar" ? label : "Enviar recuperacao";
+    isBusy && state.mode === "recuperar" ? label : "Enviar recuperação";
   elements.newPasswordButton.textContent =
     isBusy && state.mode === "nova-senha" ? label : "Salvar nova senha";
 }
@@ -317,7 +317,7 @@ function setMessage(message, tone = "muted") {
 
 function validateEmail(email) {
   if (!email || !email.includes("@")) {
-    setMessage("Digite um e-mail valido.", "error");
+    setMessage("Digite um e-mail válido.", "error");
     return false;
   }
 
@@ -351,8 +351,8 @@ function hydrateProfile() {
   if (!state.currentUser) {
     elements.profileNameInput.value = "";
     elements.profileEmailInput.value = "";
-    elements.profileDisplayName.textContent = "Conta nao conectada";
-    elements.profileDisplayEmail.textContent = "Volte ao app e faca login.";
+    elements.profileDisplayName.textContent = "Conta não conectada";
+    elements.profileDisplayEmail.textContent = "Volte ao app e faça login.";
     return;
   }
 
@@ -406,7 +406,7 @@ function loadSupabaseConfig() {
       anonKey: stored.anonKey || embedded.anonKey,
     };
   } catch (error) {
-    console.warn("Nao foi possivel recuperar a configuracao do Supabase.", error);
+    console.warn("Não foi possível recuperar a configuração do Supabase.", error);
     return embedded;
   }
 }
@@ -426,7 +426,7 @@ function formatAuthError(error, fallback) {
   const message = String(error?.message || "").toLowerCase();
 
   if (message.includes("already registered") || message.includes("already exists")) {
-    return "Esse e-mail ja tem conta. Volte para o app e entre com sua senha.";
+    return "Esse e-mail já tem conta. Volte para o app e entre com sua senha.";
   }
 
   if (message.includes("invalid login credentials")) {
