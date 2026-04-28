@@ -8,6 +8,7 @@ const MAX_INSTALLMENTS = 1200;
 const ALLOCATION_CATEGORIES = {
   emergencyFund: "Caixa de emergencia",
   investments: "Investimentos",
+  investmentWithdrawal: "Saque investimentos",
 };
 
 const CLOUD_TABLES = {
@@ -27,10 +28,17 @@ const categories = {
     "Cartao de credito",
     "Imprevistos",
     ALLOCATION_CATEGORIES.emergencyFund,
+    ALLOCATION_CATEGORIES.investmentWithdrawal,
+    "Outros",
+  ],
+  income: [
+    "Salario",
+    "Freela",
+    "Presentes",
+    ALLOCATION_CATEGORIES.emergencyFund,
     ALLOCATION_CATEGORIES.investments,
     "Outros",
   ],
-  income: ["Salario", "Freela", "Presentes", "Outros"],
 };
 
 const monthNamesShort = [
@@ -1712,8 +1720,8 @@ function renderApp(initialLoad = false) {
 
 function renderSummary() {
   const monthEntries = getTransactionsForMonth(state.selectedMonth);
-  const income = sumByType(monthEntries, "income");
-  const expense = sumByType(monthEntries, "expense");
+  const income = sumCurrentImpactsByDirection(monthEntries, "income");
+  const expense = sumCurrentImpactsByDirection(monthEntries, "expense");
   const currentBalance = getCurrentBalanceThroughMonth(state.selectedMonth);
   const emergencyBalance = getAllocationBalanceThroughMonth("emergency", state.selectedMonth);
   const investmentsBalance = getAllocationBalanceThroughMonth("investments", state.selectedMonth);
@@ -1907,8 +1915,8 @@ function renderTrend() {
     const entries = getTransactionsForMonth(month);
     return {
       month,
-      income: sumByType(entries, "income"),
-      expense: sumByType(entries, "expense"),
+      income: sumCurrentImpactsByDirection(entries, "income"),
+      expense: sumCurrentImpactsByDirection(entries, "expense"),
       emergency: sumAllocationsByKind(entries, "emergency"),
       investments: sumAllocationsByKind(entries, "investments"),
     };
@@ -2085,7 +2093,7 @@ function getCurrentBalanceThroughMonth(monthString) {
   const recurringEntries = getGeneratedRecurringTransactionsThroughMonth(monthString);
 
   const transactionBalance = [...directEntries, ...recurringEntries].reduce((total, entry) => {
-    return entry.type === "income" ? total + entry.amount : total - entry.amount;
+    return total + getCurrentBalanceImpact(entry);
   }, 0);
 
   return transactionBalance;
@@ -2216,24 +2224,32 @@ function getCommitmentSummary(monthString) {
   };
 }
 
-function sumByType(entries, type) {
-  return entries
-    .filter((entry) => entry.type === type)
-    .reduce((total, entry) => total + entry.amount, 0);
+function sumCurrentImpactsByDirection(entries, direction) {
+  return entries.reduce((total, entry) => {
+    const impact = getCurrentBalanceImpact(entry);
+
+    if (direction === "income" && impact > 0) {
+      return total + impact;
+    }
+
+    if (direction === "expense" && impact < 0) {
+      return total + Math.abs(impact);
+    }
+
+    return total;
+  }, 0);
 }
 
 function sumAllocationsByKind(entries, kind) {
   return entries
-    .filter((entry) => getAllocationKind(entry) === kind && entry.type === "expense")
-    .reduce((total, entry) => total + entry.amount, 0);
+    .filter((entry) => getAllocationKind(entry) === kind)
+    .reduce((total, entry) => total + Math.max(0, getAllocationBalanceImpact(entry)), 0);
 }
 
 function getAllocationBalanceThroughMonth(kind, monthString) {
   return state.transactions
     .filter((entry) => entry.date.slice(0, 7) <= monthString && getAllocationKind(entry) === kind)
-    .reduce((total, entry) => {
-      return entry.type === "income" ? total - entry.amount : total + entry.amount;
-    }, 0);
+    .reduce((total, entry) => total + getAllocationBalanceImpact(entry), 0);
 }
 
 function isAllocationEntry(entry) {
@@ -2245,11 +2261,46 @@ function getAllocationKind(entry) {
     return "emergency";
   }
 
-  if (entry.category === ALLOCATION_CATEGORIES.investments) {
+  if (
+    entry.category === ALLOCATION_CATEGORIES.investments ||
+    entry.category === ALLOCATION_CATEGORIES.investmentWithdrawal
+  ) {
     return "investments";
   }
 
   return "";
+}
+
+function getCurrentBalanceImpact(entry) {
+  if (entry.category === ALLOCATION_CATEGORIES.emergencyFund) {
+    return entry.type === "income" ? entry.amount : -entry.amount;
+  }
+
+  if (entry.category === ALLOCATION_CATEGORIES.investments) {
+    return -entry.amount;
+  }
+
+  if (entry.category === ALLOCATION_CATEGORIES.investmentWithdrawal) {
+    return entry.amount;
+  }
+
+  return entry.type === "income" ? entry.amount : -entry.amount;
+}
+
+function getAllocationBalanceImpact(entry) {
+  if (entry.category === ALLOCATION_CATEGORIES.emergencyFund) {
+    return entry.type === "income" ? -entry.amount : entry.amount;
+  }
+
+  if (entry.category === ALLOCATION_CATEGORIES.investments) {
+    return entry.amount;
+  }
+
+  if (entry.category === ALLOCATION_CATEGORIES.investmentWithdrawal) {
+    return -entry.amount;
+  }
+
+  return 0;
 }
 
 function getRollingMonths(count) {
