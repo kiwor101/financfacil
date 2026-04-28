@@ -39,10 +39,14 @@ create index if not exists recurring_rules_user_start_idx
 
 create table if not exists public.account_balances (
   user_id uuid primary key references auth.users (id) on delete cascade,
+  current_balance numeric(12, 2) not null default 0 check (current_balance >= 0),
   emergency_fund numeric(12, 2) not null default 0 check (emergency_fund >= 0),
   investments numeric(12, 2) not null default 0 check (investments >= 0),
   updated_at timestamptz not null default timezone('utc', now())
 );
+
+alter table public.account_balances
+  add column if not exists current_balance numeric(12, 2) not null default 0 check (current_balance >= 0);
 
 alter table public.transactions enable row level security;
 alter table public.recurring_rules enable row level security;

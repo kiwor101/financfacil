@@ -666,6 +666,26 @@ select {
   font-size: 1.15rem;
 }
 
+.initial-balances-panel {
+  margin-top: 1rem;
+}
+
+.initial-balances-heading {
+  margin-bottom: 0.65rem;
+}
+
+.initial-balances-form {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
+  gap: 0.65rem;
+  align-items: end;
+}
+
+.initial-balances-form .primary-button {
+  min-height: 2.62rem;
+  white-space: nowrap;
+}
+
 .entry-form {
   display: grid;
   gap: 0.5rem;
@@ -1163,7 +1183,8 @@ select {
   .content-grid,
   .commitments-grid,
   .sync-bar,
-  .auth-grid {
+  .auth-grid,
+  .initial-balances-form {
     grid-template-columns: 1fr;
   }
 
@@ -1208,6 +1229,10 @@ select {
   .summary-card,
   .sync-bar {
     padding: 0.9rem;
+  }
+
+  .initial-balances-panel {
+    margin-top: 0.75rem;
   }
 
   .period-grid,

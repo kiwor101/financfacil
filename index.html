@@ -177,6 +177,59 @@
         </article>
       </section>
 
+      <section class="panel panel-compact initial-balances-panel reveal">
+        <div class="panel-heading initial-balances-heading">
+          <div>
+            <h2>Saldos iniciais</h2>
+            <p class="micro-copy">
+              Informe o que você já tinha antes de começar a usar o app.
+            </p>
+          </div>
+        </div>
+
+        <form class="initial-balances-form" id="initialBalancesForm">
+          <label class="field">
+            <span class="field-label">Saldo atual inicial</span>
+            <input
+              id="initialCurrentBalanceInput"
+              inputmode="decimal"
+              min="0"
+              placeholder="0,00"
+              step="0.01"
+              type="number"
+            />
+          </label>
+
+          <label class="field">
+            <span class="field-label">Caixa de emergência inicial</span>
+            <input
+              id="initialEmergencyFundInput"
+              inputmode="decimal"
+              min="0"
+              placeholder="0,00"
+              step="0.01"
+              type="number"
+            />
+          </label>
+
+          <label class="field">
+            <span class="field-label">Investimentos iniciais</span>
+            <input
+              id="initialInvestmentsInput"
+              inputmode="decimal"
+              min="0"
+              placeholder="0,00"
+              step="0.01"
+              type="number"
+            />
+          </label>
+
+          <button class="primary-button primary-button-compact" id="saveInitialBalancesButton" type="submit">
+            Salvar saldos
+          </button>
+        </form>
+      </section>
+
       <section class="content-grid">
         <article class="panel panel-compact reveal">
           <div class="panel-heading">

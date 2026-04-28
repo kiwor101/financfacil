@@ -13,6 +13,7 @@ A proposta é manter uma interface compacta, limpa e fácil de usar no dia a dia
 ## Funcionalidades atuais
 
 - Saldo atual calculado a partir das entradas e saídas.
+- Saldos iniciais para saldo atual, caixa de emergência e investimentos.
 - Controle separado para caixa de emergência e investimentos.
 - Cadastro de entradas e saídas por categoria.
 - Campo personalizado para categorias do tipo `Outros`.
@@ -72,6 +73,8 @@ window.FLUXO_SUPABASE_CONFIG = window.FLUXO_SUPABASE_CONFIG || {
 Use somente a chave pública do Supabase, como `publishable key` ou `anon key`.
 
 Nunca coloque `secret key` ou `service_role` no projeto, porque essas chaves não devem ir para o navegador nem para o GitHub.
+
+Sempre que o arquivo `supabase-setup.sql` for atualizado, rode-o novamente no SQL Editor para aplicar novas colunas e ajustes.
 
 ## Estrutura principal
 

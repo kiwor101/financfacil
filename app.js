@@ -112,6 +112,11 @@ const elements = {
   expenseValue: document.querySelector("#expenseValue"),
   emergencyFundValue: document.querySelector("#emergencyFundValue"),
   investmentsValue: document.querySelector("#investmentsValue"),
+  initialBalancesForm: document.querySelector("#initialBalancesForm"),
+  initialCurrentBalanceInput: document.querySelector("#initialCurrentBalanceInput"),
+  initialEmergencyFundInput: document.querySelector("#initialEmergencyFundInput"),
+  initialInvestmentsInput: document.querySelector("#initialInvestmentsInput"),
+  saveInitialBalancesButton: document.querySelector("#saveInitialBalancesButton"),
   entryForm: document.querySelector("#entryForm"),
   submitButton: document.querySelector("#submitEntryButton"),
   amountInput: document.querySelector("#amountInput"),
@@ -174,6 +179,7 @@ async function bootstrap() {
   elements.installmentsInput.value = "2";
   populateCategoryOptions(getSelectedEntryType());
   hydrateAuthFields();
+  hydrateInitialBalanceInputs();
   bindEvents();
   updatePlanModeUI();
   renderApp(true);
@@ -182,6 +188,7 @@ async function bootstrap() {
 }
 
 function bindEvents() {
+  elements.initialBalancesForm.addEventListener("submit", handleInitialBalancesSubmit);
   elements.entryForm.addEventListener("submit", handleEntrySubmit);
   elements.searchInput.addEventListener("input", () => renderEntries());
   elements.typeFilter.addEventListener("change", () => renderEntries());
@@ -414,6 +421,7 @@ function createEmptyState(selectedMonth = formatMonthInput(today)) {
     transactions: [],
     recurringRules: [],
     balances: {
+      currentBalance: 0,
       emergencyFund: 0,
       investments: 0,
     },
@@ -434,6 +442,7 @@ function clearLocalFinancialData({ preserveLegacyImport = false } = {}) {
   }
 
   saveState();
+  hydrateInitialBalanceInputs();
   renderApp();
 }
 
@@ -467,6 +476,7 @@ async function loadCloudState({ migrateLegacy = false, quiet = false } = {}) {
     state.recurringRules = remoteRecurringRules;
     state.balances = remoteBalances;
     saveState();
+    hydrateInitialBalanceInputs();
     renderApp();
 
     lastCloudSyncAt = new Date();
@@ -585,7 +595,7 @@ async function fetchCloudRecurringRules() {
 async function fetchCloudBalances() {
   const { data, error } = await supabaseClient
     .from(CLOUD_TABLES.balances)
-    .select("emergency_fund, investments")
+    .select("*")
     .maybeSingle();
 
   if (error) {
@@ -593,6 +603,7 @@ async function fetchCloudBalances() {
   }
 
   return normalizeBalances({
+    currentBalance: data?.current_balance,
     emergencyFund: data?.emergency_fund,
     investments: data?.investments,
   });
@@ -624,6 +635,7 @@ async function upsertCloudBalances() {
   const { error } = await supabaseClient.from(CLOUD_TABLES.balances).upsert(
     {
       user_id: currentUser.id,
+      current_balance: state.balances.currentBalance,
       emergency_fund: state.balances.emergencyFund,
       investments: state.balances.investments,
       updated_at: new Date().toISOString(),
@@ -1030,6 +1042,7 @@ function loadState() {
 
 function normalizeBalances(balances) {
   return {
+    currentBalance: normalizeMoneyValue(balances?.currentBalance),
     emergencyFund: normalizeMoneyValue(balances?.emergencyFund),
     investments: normalizeMoneyValue(balances?.investments),
   };
@@ -1221,8 +1234,46 @@ function serializeRecurringRule(rule) {
   };
 }
 
-async function handleBalanceSave(balanceType) {
+async function handleInitialBalancesSubmit(event) {
+  event.preventDefault();
+
+  const nextBalances = normalizeBalances({
+    currentBalance: parseMoneyInput(elements.initialCurrentBalanceInput.value),
+    emergencyFund: parseMoneyInput(elements.initialEmergencyFundInput.value),
+    investments: parseMoneyInput(elements.initialInvestmentsInput.value),
+  });
+
+  state.balances = nextBalances;
+  saveState();
   renderApp();
+  hydrateInitialBalanceInputs();
+
+  if (shouldUseCloudPersistence()) {
+    try {
+      elements.saveInitialBalancesButton.disabled = true;
+      setSyncNotice("Sincronizando", "Salvando seus saldos iniciais na nuvem...", "warning");
+      await upsertCloudBalances();
+      lastCloudSyncAt = new Date();
+      setSyncNotice("Sincronizado", getSyncedMessage(), "success");
+    } catch (error) {
+      handleCloudError("Não consegui salvar os saldos iniciais.", error);
+    } finally {
+      elements.saveInitialBalancesButton.disabled = false;
+    }
+    return;
+  }
+
+  setLocalModeNotice("Saldos iniciais salvos neste aparelho.");
+}
+
+function hydrateInitialBalanceInputs() {
+  elements.initialCurrentBalanceInput.value = formatPlainMoney(state.balances.currentBalance);
+  elements.initialEmergencyFundInput.value = formatPlainMoney(state.balances.emergencyFund);
+  elements.initialInvestmentsInput.value = formatPlainMoney(state.balances.investments);
+}
+
+function parseMoneyInput(value) {
+  return Number.parseFloat(String(value || "0").replace(",", ".")) || 0;
 }
 
 function populateMonthOptions() {
@@ -2122,7 +2173,7 @@ function getCurrentBalanceThroughMonth(monthString) {
     return total + getCurrentBalanceImpact(entry);
   }, 0);
 
-  return transactionBalance;
+  return state.balances.currentBalance + transactionBalance;
 }
 
 function getGeneratedRecurringTransactions(monthString) {
@@ -2273,9 +2324,12 @@ function sumAllocationsByKind(entries, kind) {
 }
 
 function getAllocationBalanceThroughMonth(kind, monthString) {
+  const initialBalance =
+    kind === "emergency" ? state.balances.emergencyFund : state.balances.investments;
+
   return state.transactions
     .filter((entry) => entry.date.slice(0, 7) <= monthString && getAllocationKind(entry) === kind)
-    .reduce((total, entry) => total + getAllocationBalanceImpact(entry), 0);
+    .reduce((total, entry) => total + getAllocationBalanceImpact(entry), initialBalance);
 }
 
 function isAllocationEntry(entry) {
