@@ -39,6 +39,24 @@ A proposta é manter uma interface compacta, limpa e fácil de usar no dia a dia
 
 Este projeto ainda está em desenvolvimento ativo.
 
+## Ambiente de testes
+
+Esta pasta está na branch `develop` e deve ser usada como base de testes.
+
+A versão estável de produção fica na pasta:
+
+```text
+C:\Users\Ti\Documents\GitHub\financfacil
+```
+
+A versão de testes fica nesta pasta:
+
+```text
+C:\Users\Ti\Documents\GitHub\financfacil-teste
+```
+
+Para não misturar dados reais, use um projeto Supabase separado na pasta de testes. Veja o arquivo `AMBIENTES.md`.
+
 Prioridades atuais:
 
 - melhorar a experiência no celular;

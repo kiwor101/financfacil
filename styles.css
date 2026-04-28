@@ -123,8 +123,29 @@ select {
 
 .utility-bar {
   display: flex;
+  gap: 0.65rem;
   justify-content: flex-end;
+  align-items: center;
   margin-bottom: 0.65rem;
+}
+
+.environment-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.35rem;
+  padding: 0.48rem 0.82rem;
+  border: 1px solid rgba(214, 150, 52, 0.36);
+  border-radius: 999px;
+  background: rgba(214, 150, 52, 0.14);
+  color: #8c5c15;
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+
+:root[data-theme="dark"] .environment-badge {
+  color: #f0c66e;
+  background: rgba(240, 198, 110, 0.12);
+  border-color: rgba(240, 198, 110, 0.28);
 }
 
 .topbar,
@@ -379,6 +400,11 @@ select {
   padding: 1.2rem 0;
   display: grid;
   align-items: center;
+}
+
+.account-environment-badge {
+  justify-self: center;
+  margin-bottom: 0.8rem;
 }
 
 .account-card {
