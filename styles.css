@@ -666,12 +666,34 @@ select {
   font-size: 1.15rem;
 }
 
+.initial-balances-trigger {
+  display: flex;
+  justify-content: flex-end;
+  margin: 0.55rem 0 0.2rem;
+}
+
+.initial-balances-toggle {
+  min-height: 2.25rem;
+  padding-inline: 0.9rem;
+  font-size: 0.86rem;
+}
+
 .initial-balances-panel {
-  margin-top: 1rem;
+  margin-top: 0.55rem;
 }
 
 .initial-balances-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
   margin-bottom: 0.65rem;
+}
+
+.initial-balances-close {
+  min-height: 2.1rem;
+  padding: 0.45rem 0.72rem;
+  font-size: 0.8rem;
 }
 
 .initial-balances-form {

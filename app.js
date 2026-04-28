@@ -135,6 +135,9 @@ const elements = {
   expenseValue: document.querySelector("#expenseValue"),
   emergencyFundValue: document.querySelector("#emergencyFundValue"),
   investmentsValue: document.querySelector("#investmentsValue"),
+  initialBalancesPanel: document.querySelector("#initialBalancesPanel"),
+  toggleInitialBalancesButton: document.querySelector("#toggleInitialBalancesButton"),
+  closeInitialBalancesButton: document.querySelector("#closeInitialBalancesButton"),
   initialBalancesForm: document.querySelector("#initialBalancesForm"),
   initialCurrentBalanceInput: document.querySelector("#initialCurrentBalanceInput"),
   initialEmergencyFundInput: document.querySelector("#initialEmergencyFundInput"),
@@ -211,6 +214,12 @@ async function bootstrap() {
 }
 
 function bindEvents() {
+  elements.toggleInitialBalancesButton.addEventListener("click", () => {
+    setInitialBalancesPanelOpen(elements.initialBalancesPanel.hidden);
+  });
+  elements.closeInitialBalancesButton.addEventListener("click", () => {
+    setInitialBalancesPanelOpen(false);
+  });
   elements.initialBalancesForm.addEventListener("submit", handleInitialBalancesSubmit);
   elements.entryForm.addEventListener("submit", handleEntrySubmit);
   elements.searchInput.addEventListener("input", () => renderEntries());
@@ -655,22 +664,34 @@ async function upsertCloudRecurringRules(rules) {
 }
 
 async function upsertCloudBalances() {
-  const { error } = await supabaseClient.from(CLOUD_TABLES.balances).upsert(
-    {
-      user_id: currentUser.id,
-      current_balance: state.balances.currentBalance,
-      emergency_fund: state.balances.emergencyFund,
-      investments: state.balances.investments,
-      updated_at: new Date().toISOString(),
-    },
-    {
-      onConflict: "user_id",
-    },
-  );
+  const payload = {
+    user_id: currentUser.id,
+    current_balance: state.balances.currentBalance,
+    emergency_fund: state.balances.emergencyFund,
+    investments: state.balances.investments,
+    updated_at: new Date().toISOString(),
+  };
+  const { error } = await supabaseClient.from(CLOUD_TABLES.balances).upsert(payload, {
+    onConflict: "user_id",
+  });
 
   if (error) {
+    if (isMissingCurrentBalanceColumnError(error)) {
+      const legacyPayload = { ...payload };
+      delete legacyPayload.current_balance;
+      const { error: legacyError } = await supabaseClient
+        .from(CLOUD_TABLES.balances)
+        .upsert(legacyPayload, { onConflict: "user_id" });
+
+      if (!legacyError) {
+        return { outdatedSchema: true };
+      }
+    }
+
     throw error;
   }
+
+  return { outdatedSchema: false };
 }
 
 async function deleteCloudTransaction(entryId) {
@@ -952,6 +973,10 @@ function handleCloudError(prefix, error) {
 function formatCloudError(error) {
   const message = String(error?.message || "").toLowerCase();
 
+  if (isMissingCurrentBalanceColumnError(error)) {
+    return "A tabela de saldos está desatualizada. Rode novamente o arquivo supabase-setup.sql no Supabase.";
+  }
+
   if (message.includes("relation") && message.includes("does not exist")) {
     return "Crie as tabelas no Supabase usando o arquivo supabase-setup.sql.";
   }
@@ -973,6 +998,20 @@ function formatCloudError(error) {
   }
 
   return "Confira a configuração do projeto e tente de novo.";
+}
+
+function isMissingCurrentBalanceColumnError(error) {
+  const message = String(error?.message || "").toLowerCase();
+  const details = String(error?.details || "").toLowerCase();
+  const hint = String(error?.hint || "").toLowerCase();
+  const combined = `${message} ${details} ${hint}`;
+
+  return (
+    combined.includes("current_balance") &&
+    (combined.includes("column") ||
+      combined.includes("schema cache") ||
+      combined.includes("could not find"))
+  );
 }
 
 function readSupabaseConfigInputs() {
@@ -1304,9 +1343,18 @@ async function handleInitialBalancesSubmit(event) {
     try {
       elements.saveInitialBalancesButton.disabled = true;
       setSyncNotice("Sincronizando", "Salvando seus saldos iniciais na nuvem...", "warning");
-      await upsertCloudBalances();
+      const result = await upsertCloudBalances();
       lastCloudSyncAt = new Date();
-      setSyncNotice("Sincronizado", getSyncedMessage(), "success");
+      setInitialBalancesPanelOpen(false);
+      if (result.outdatedSchema) {
+        setSyncNotice(
+          "Atenção",
+          "Saldos salvos parcialmente. Rode o supabase-setup.sql atualizado para salvar o saldo atual inicial na nuvem.",
+          "warning",
+        );
+      } else {
+        setSyncNotice("Sincronizado", getSyncedMessage(), "success");
+      }
     } catch (error) {
       handleCloudError("Não consegui salvar os saldos iniciais.", error);
     } finally {
@@ -1315,6 +1363,7 @@ async function handleInitialBalancesSubmit(event) {
     return;
   }
 
+  setInitialBalancesPanelOpen(false);
   setLocalModeNotice("Saldos iniciais salvos neste aparelho.");
 }
 
@@ -1322,6 +1371,13 @@ function hydrateInitialBalanceInputs() {
   elements.initialCurrentBalanceInput.value = formatPlainMoney(state.balances.currentBalance);
   elements.initialEmergencyFundInput.value = formatPlainMoney(state.balances.emergencyFund);
   elements.initialInvestmentsInput.value = formatPlainMoney(state.balances.investments);
+}
+
+function setInitialBalancesPanelOpen(isOpen) {
+  elements.initialBalancesPanel.hidden = !isOpen;
+  elements.toggleInitialBalancesButton.textContent = isOpen
+    ? "Ocultar saldos iniciais"
+    : "Ajustar saldos iniciais";
 }
 
 function parseMoneyInput(value) {

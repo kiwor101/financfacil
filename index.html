@@ -177,7 +177,13 @@
         </article>
       </section>
 
-      <section class="panel panel-compact initial-balances-panel reveal">
+      <div class="initial-balances-trigger reveal">
+        <button class="ghost-button initial-balances-toggle" id="toggleInitialBalancesButton" type="button">
+          Ajustar saldos iniciais
+        </button>
+      </div>
+
+      <section class="panel panel-compact initial-balances-panel reveal" id="initialBalancesPanel" hidden>
         <div class="panel-heading initial-balances-heading">
           <div>
             <h2>Saldos iniciais</h2>
@@ -185,6 +191,9 @@
               Informe o que você já tinha antes de começar a usar o app.
             </p>
           </div>
+          <button class="ghost-button initial-balances-close" id="closeInitialBalancesButton" type="button">
+            Fechar
+          </button>
         </div>
 
         <form class="initial-balances-form" id="initialBalancesForm">
