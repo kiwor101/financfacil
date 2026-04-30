@@ -530,8 +530,10 @@ select {
   display: block;
   margin-top: 0.65rem;
   font-size: 1.85rem;
+  line-height: 1.05;
   letter-spacing: 0;
   font-family: var(--headline);
+  white-space: nowrap;
 }
 
 .summary-value[data-tone="positive"] {
@@ -543,7 +545,8 @@ select {
 }
 
 .summary-card-main .summary-value {
-  font-size: 2.15rem;
+  font-size: clamp(1.75rem, 2.45vw, 2.15rem);
+  letter-spacing: -0.02em;
 }
 
 .summary-card-subtle .summary-value,
@@ -1342,7 +1345,7 @@ select {
   }
 
   .summary-card-main .summary-value {
-    font-size: 1.72rem;
+    font-size: clamp(1.45rem, 8vw, 1.72rem);
   }
 
   .summary-card-subtle .summary-value,
