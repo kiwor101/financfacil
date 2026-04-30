@@ -19,17 +19,33 @@
     <div class="page-glow page-glow-right" aria-hidden="true"></div>
 
     <main class="radar-shell">
-      <section class="account-card reveal">
-        <a class="account-back" href="./index.html">Voltar para o app</a>
+      <section class="account-card radar-page-card reveal">
+        <div class="radar-topline">
+          <a class="account-back radar-back-button" href="./index.html">Voltar</a>
+          <div class="radar-status" id="radarStatus">Carregando indicadores...</div>
+        </div>
 
-        <div class="account-heading">
-          <h1>Radar de investimentos</h1>
+        <div class="account-heading radar-heading">
+          <p class="eyebrow">Radar do mercado</p>
+          <h1>Investimentos com leitura simples</h1>
           <p>
-            Indicadores rápidos para estudar renda fixa, dólar e bitcoin sem sair do app.
+            Um painel rápido para acompanhar juros, inflação, dólar e bitcoin antes de decidir onde estudar melhor.
           </p>
         </div>
 
-        <div class="radar-status" id="radarStatus">Carregando indicadores...</div>
+        <section class="radar-focus" aria-label="Resumo inteligente">
+          <article>
+            <span>Cenário de hoje</span>
+            <strong id="marketMoodValue">Analisando...</strong>
+            <p id="marketMoodText">Buscando os indicadores para montar uma leitura simples.</p>
+          </article>
+
+          <article>
+            <span>Reserva segura</span>
+            <strong>Liquidez primeiro</strong>
+            <p>Para emergência, priorize baixo risco e dinheiro disponível rápido.</p>
+          </article>
+        </section>
 
         <section class="radar-grid" aria-label="Indicadores do mercado">
           <article class="radar-card">
@@ -47,7 +63,7 @@
           <article class="radar-card">
             <span>IPCA</span>
             <strong id="ipcaValue">--</strong>
-            <small>Inflação acumulada usada como referência.</small>
+            <small>Inflação usada como referência.</small>
           </article>
 
           <article class="radar-card">
@@ -63,34 +79,54 @@
           </article>
         </section>
 
+        <section class="radar-simulator">
+          <div class="radar-section-heading">
+            <h2>Simulador de CDI</h2>
+            <p>Simule quanto um valor poderia render usando CDI anual, percentual do CDI e prazo em meses.</p>
+          </div>
+
+          <div class="radar-sim-form">
+            <label class="field">
+              <span class="field-label">Valor investido</span>
+              <input id="radarAmountInput" inputmode="decimal" min="0" step="100" type="number" value="1000" />
+            </label>
+
+            <label class="field">
+              <span class="field-label">CDI ao ano (%)</span>
+              <input id="radarCdiInput" inputmode="decimal" min="0" step="0.01" type="number" value="0" />
+            </label>
+
+            <label class="field">
+              <span class="field-label">% do CDI</span>
+              <input id="radarCdiPercentInput" inputmode="decimal" min="0" step="1" type="number" value="100" />
+            </label>
+
+            <label class="field">
+              <span class="field-label">Meses investido</span>
+              <input id="radarMonthsInput" inputmode="numeric" min="1" step="1" type="number" value="12" />
+            </label>
+          </div>
+
+          <div class="radar-sim-results" id="radarSimResults"></div>
+        </section>
+
         <section class="radar-advice">
-          <h2>Leitura rápida</h2>
+          <div class="radar-section-heading">
+            <h2>Dicas para decidir melhor</h2>
+            <p>Ideias rápidas para evitar decisão no impulso.</p>
+          </div>
           <div id="radarTips" class="radar-tips">
             <p>Buscando dicas com base nos indicadores...</p>
           </div>
         </section>
 
-        <section class="radar-simulator">
-          <div>
-            <h2>Simulador rápido de CDI</h2>
-            <p>Veja uma estimativa bruta anual para comparar ofertas de bancos digitais.</p>
-          </div>
-
-          <label class="field">
-            <span class="field-label">Valor para simular</span>
-            <input id="radarAmountInput" inputmode="decimal" min="0" step="100" type="number" value="1000" />
-          </label>
-
-          <div class="radar-sim-results" id="radarSimResults"></div>
-        </section>
-
         <section class="radar-links">
-          <h2>Fontes para continuar estudando</h2>
+          <h2>Fontes confiáveis para estudar</h2>
           <a href="https://www.tesourodireto.com.br/" target="_blank" rel="noopener noreferrer">
             Tesouro Direto oficial
           </a>
-          <a href="https://valorinveste.globo.com/newsletter/" target="_blank" rel="noopener noreferrer">
-            Newsletters do Valor Investe
+          <a href="https://valorinveste.globo.com/" target="_blank" rel="noopener noreferrer">
+            Valor Investe
           </a>
           <a href="https://www.bcb.gov.br/" target="_blank" rel="noopener noreferrer">
             Banco Central do Brasil
