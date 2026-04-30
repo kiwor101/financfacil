@@ -143,6 +143,8 @@ const elements = {
   summaryGrid: document.querySelector("#summaryGrid"),
   balanceValue: document.querySelector("#balanceValue"),
   balanceHint: document.querySelector("#balanceHint"),
+  monthSpendingValue: document.querySelector("#monthSpendingValue"),
+  monthSpendingHint: document.querySelector("#monthSpendingHint"),
   incomeValue: document.querySelector("#incomeValue"),
   expenseValue: document.querySelector("#expenseValue"),
   creditCardValue: document.querySelector("#creditCardValue"),
@@ -230,14 +232,20 @@ async function bootstrap() {
 }
 
 function bindEvents() {
-  elements.toggleInitialBalancesButton.addEventListener("click", () => {
-    setInitialBalancesPanelOpen(elements.initialBalancesPanel.hidden);
-  });
-  elements.closeInitialBalancesButton.addEventListener("click", () => {
-    setInitialBalancesPanelOpen(false);
-  });
+  if (elements.toggleInitialBalancesButton && elements.initialBalancesPanel) {
+    elements.toggleInitialBalancesButton.addEventListener("click", () => {
+      setInitialBalancesPanelOpen(elements.initialBalancesPanel.hidden);
+    });
+  }
+  if (elements.closeInitialBalancesButton) {
+    elements.closeInitialBalancesButton.addEventListener("click", () => {
+      setInitialBalancesPanelOpen(false);
+    });
+  }
   elements.payCreditCardInvoiceButton.addEventListener("click", handleCreditCardInvoicePayment);
-  elements.initialBalancesForm.addEventListener("submit", handleInitialBalancesSubmit);
+  if (elements.initialBalancesForm) {
+    elements.initialBalancesForm.addEventListener("submit", handleInitialBalancesSubmit);
+  }
   elements.entryForm.addEventListener("submit", handleEntrySubmit);
   elements.searchInput.addEventListener("input", () => renderEntries());
   elements.typeFilter.addEventListener("change", () => renderEntries());
@@ -1402,12 +1410,24 @@ async function handleInitialBalancesSubmit(event) {
 }
 
 function hydrateInitialBalanceInputs() {
+  if (
+    !elements.initialCurrentBalanceInput ||
+    !elements.initialEmergencyFundInput ||
+    !elements.initialInvestmentsInput
+  ) {
+    return;
+  }
+
   elements.initialCurrentBalanceInput.value = formatPlainMoney(state.balances.currentBalance);
   elements.initialEmergencyFundInput.value = formatPlainMoney(state.balances.emergencyFund);
   elements.initialInvestmentsInput.value = formatPlainMoney(state.balances.investments);
 }
 
 function setInitialBalancesPanelOpen(isOpen) {
+  if (!elements.initialBalancesPanel || !elements.toggleInitialBalancesButton) {
+    return;
+  }
+
   elements.initialBalancesPanel.hidden = !isOpen;
   elements.toggleInitialBalancesButton.textContent = isOpen
     ? "Ocultar saldos iniciais"
@@ -2092,11 +2112,14 @@ function renderSummary() {
   const expense = sumCurrentImpactsByDirection(monthEntries, "expense");
   const currentBalance = getCurrentBalanceThroughMonth(state.selectedMonth);
   const creditCardBalance = getCreditCardBalanceForMonth(state.selectedMonth);
+  const monthSpending = expense + creditCardBalance;
   const emergencyBalance = getAllocationBalanceThroughMonth("emergency", state.selectedMonth);
   const investmentsBalance = getAllocationBalanceThroughMonth("investments", state.selectedMonth);
 
   elements.balanceValue.textContent = formatCurrency(currentBalance);
   elements.balanceValue.dataset.tone = currentBalance >= 0 ? "positive" : "negative";
+  elements.monthSpendingValue.textContent = formatCurrency(monthSpending);
+  elements.monthSpendingHint.textContent = `${formatCurrency(expense)} saídas + ${formatCurrency(creditCardBalance)} cartão.`;
   elements.incomeValue.textContent = formatCurrency(income);
   elements.expenseValue.textContent = formatCurrency(expense);
   elements.creditCardValue.textContent = formatCurrency(creditCardBalance);
@@ -2737,11 +2760,18 @@ function isInvestmentWithdrawalCategoryKey(categoryKey) {
 }
 
 function isCreditCardPurchaseKey(categoryKey) {
-  return CREDIT_CARD_PURCHASE_KEYS.has(categoryKey);
+  return (
+    CREDIT_CARD_PURCHASE_KEYS.has(categoryKey) ||
+    (categoryKey.includes("cart") &&
+      (categoryKey.includes("credit") || categoryKey.includes("crdit") || categoryKey.includes("credito")))
+  );
 }
 
 function isCreditCardPaymentKey(categoryKey) {
-  return CREDIT_CARD_PAYMENT_KEYS.has(categoryKey);
+  return (
+    CREDIT_CARD_PAYMENT_KEYS.has(categoryKey) ||
+    (categoryKey.includes("pagamento") && categoryKey.includes("cart"))
+  );
 }
 
 function getRollingMonths(count) {

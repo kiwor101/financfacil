@@ -233,7 +233,7 @@ select {
 
 .summary-grid {
   display: grid;
-  grid-template-columns: 1.35fr repeat(5, minmax(0, 1fr));
+  grid-template-columns: 1.35fr repeat(6, minmax(0, 1fr));
   gap: 1rem;
   margin: 1rem 0;
 }
@@ -598,6 +598,10 @@ select {
   background: linear-gradient(160deg, rgba(204, 99, 66, 0.15), rgba(255, 250, 244, 0.88));
 }
 
+.tone-month-spending {
+  background: linear-gradient(160deg, rgba(214, 150, 52, 0.16), rgba(255, 251, 240, 0.9));
+}
+
 .tone-credit-card {
   background: linear-gradient(160deg, rgba(204, 99, 66, 0.17), rgba(255, 248, 242, 0.9));
 }
@@ -624,6 +628,10 @@ select {
 
 :root[data-theme="dark"] .tone-expense {
   background: linear-gradient(160deg, rgba(240, 148, 114, 0.16), rgba(16, 27, 24, 0.92));
+}
+
+:root[data-theme="dark"] .tone-month-spending {
+  background: linear-gradient(160deg, rgba(245, 190, 92, 0.16), rgba(16, 27, 24, 0.92));
 }
 
 :root[data-theme="dark"] .tone-credit-card {
@@ -703,6 +711,24 @@ select {
   display: flex;
   justify-content: flex-end;
   margin: 0.55rem 0 0.2rem;
+}
+
+.settings-link-row {
+  display: flex;
+  justify-content: flex-end;
+  margin: 0.2rem 0 0.45rem;
+}
+
+.subtle-text-link {
+  color: var(--muted);
+  font-size: 0.86rem;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 0.18rem;
+}
+
+.subtle-text-link:hover {
+  color: var(--accent-strong);
 }
 
 .initial-balances-toggle {
@@ -1194,6 +1220,32 @@ select {
   color: var(--muted);
 }
 
+.market-note {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  align-items: center;
+  margin-top: 1rem;
+  padding: 0.78rem 0.95rem;
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.5);
+  border: 1px solid rgba(36, 54, 46, 0.08);
+  color: var(--muted);
+  font-size: 0.86rem;
+}
+
+.market-note strong {
+  color: var(--ink);
+  white-space: nowrap;
+}
+
+.market-note a {
+  color: var(--accent-strong);
+  font-weight: 800;
+  text-decoration: underline;
+  text-underline-offset: 0.18rem;
+}
+
 .app-footer {
   display: flex;
   justify-content: space-between;
@@ -1293,8 +1345,14 @@ select {
   .period-grid,
   .filters,
   .sync-actions,
-  .auth-actions {
+  .auth-actions,
+  .market-note {
     grid-template-columns: 1fr;
+  }
+
+  .market-note {
+    display: grid;
+    align-items: start;
   }
 
   .topbar {

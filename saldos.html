@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Saldos iniciais | Controle financeiro</title>
+    <meta
+      name="description"
+      content="Ajuste os saldos iniciais do Controle Financeiro."
+    />
+    <meta name="theme-color" content="#0d8b72" />
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="icon" href="./icon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="./icon.svg" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="page-glow page-glow-left" aria-hidden="true"></div>
+    <div class="page-glow page-glow-right" aria-hidden="true"></div>
+
+    <main class="account-shell">
+      <section class="account-card reveal">
+        <a class="account-back" href="./index.html">Voltar para o app</a>
+
+        <div class="account-heading">
+          <h1>Saldos iniciais</h1>
+          <p>
+            Informe o que voce ja tinha antes de comecar a usar o app. Normalmente isso e preenchido uma vez.
+          </p>
+        </div>
+
+        <form class="account-form" id="initialBalancesForm">
+          <label class="field">
+            <span class="field-label">Saldo atual inicial</span>
+            <input
+              id="initialCurrentBalanceInput"
+              inputmode="decimal"
+              min="0"
+              placeholder="0,00"
+              step="0.01"
+              type="number"
+            />
+          </label>
+
+          <label class="field">
+            <span class="field-label">Caixa de emergencia inicial</span>
+            <input
+              id="initialEmergencyFundInput"
+              inputmode="decimal"
+              min="0"
+              placeholder="0,00"
+              step="0.01"
+              type="number"
+            />
+          </label>
+
+          <label class="field">
+            <span class="field-label">Investimentos iniciais</span>
+            <input
+              id="initialInvestmentsInput"
+              inputmode="decimal"
+              min="0"
+              placeholder="0,00"
+              step="0.01"
+              type="number"
+            />
+          </label>
+
+          <button class="primary-button account-primary" id="saveInitialBalancesButton" type="submit">
+            Salvar saldos
+          </button>
+        </form>
+
+        <p class="account-message" id="initialBalancesMessage" data-tone="muted">
+          Carregando seus saldos...
+        </p>
+      </section>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="./supabase-config.js"></script>
+    <script src="./saldos.js"></script>
+  </body>
+</html>

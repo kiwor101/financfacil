@@ -152,6 +152,12 @@
           </span>
         </article>
 
+        <article class="summary-card summary-card-subtle tone-month-spending">
+          <span class="summary-label">Saldo do mes</span>
+          <strong class="summary-value" id="monthSpendingValue">R$ 0,00</strong>
+          <span class="summary-footnote" id="monthSpendingHint">Saidas + cartao.</span>
+        </article>
+
         <article class="summary-card summary-card-subtle tone-income">
           <span class="summary-label">Entradas</span>
           <strong class="summary-value" id="incomeValue">R$ 0,00</strong>
@@ -186,13 +192,11 @@
         </article>
       </section>
 
-      <div class="initial-balances-trigger reveal">
-        <button class="ghost-button initial-balances-toggle" id="toggleInitialBalancesButton" type="button">
-          Ajustar saldos iniciais
-        </button>
+      <div class="settings-link-row reveal">
+        <a class="subtle-text-link" href="./saldos.html">Ajustar saldos iniciais</a>
       </div>
 
-      <section class="panel panel-compact initial-balances-panel reveal" id="initialBalancesPanel" hidden>
+      <template id="initialBalancesTemplate">
         <div class="panel-heading initial-balances-heading">
           <div>
             <h2>Saldos iniciais</h2>
@@ -246,7 +250,7 @@
             Salvar saldos
           </button>
         </form>
-      </section>
+      </template>
 
       <section class="content-grid">
         <article class="panel panel-compact reveal">
@@ -428,6 +432,16 @@
         </div>
 
         <div class="entry-list" id="entryList"></div>
+      </section>
+
+      <section class="market-note reveal" aria-label="Newsletter de investimentos">
+        <strong>Radar de investimentos</strong>
+        <span>
+          Acompanhe Selic, Tesouro Direto, dolar, bitcoin, CDI e renda fixa em fontes confiaveis.
+          <a href="https://valorinveste.globo.com/newsletter/" target="_blank" rel="noopener noreferrer">
+            Ver newsletters do Valor Investe
+          </a>
+        </span>
       </section>
 
       <footer class="app-footer">
