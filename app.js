@@ -13,7 +13,6 @@ const ALLOCATION_CATEGORIES = {
 const CREDIT_CARD_CATEGORIES = {
   purchase: "Cartão de crédito",
   payment: "Pagamento cartão de crédito",
-  closed: "Fatura cartão fechada",
 };
 const EMERGENCY_CATEGORY_KEYS = new Set([
   "caixadeemergencia",
@@ -47,7 +46,6 @@ const CREDIT_CARD_PAYMENT_KEYS = new Set([
   "entradacartao",
   "entradanocartao",
 ]);
-const CREDIT_CARD_CLOSED_KEYS = new Set(["faturacartaofechada", "fechamentofatura"]);
 const CLOUD_TABLES = {
   transactions: "transactions",
   recurringRules: "recurring_rules",
@@ -149,7 +147,7 @@ const elements = {
   expenseValue: document.querySelector("#expenseValue"),
   creditCardValue: document.querySelector("#creditCardValue"),
   creditCardHint: document.querySelector("#creditCardHint"),
-  closeCreditCardInvoiceButton: document.querySelector("#closeCreditCardInvoiceButton"),
+  payCreditCardInvoiceButton: document.querySelector("#payCreditCardInvoiceButton"),
   emergencyFundValue: document.querySelector("#emergencyFundValue"),
   investmentsValue: document.querySelector("#investmentsValue"),
   initialBalancesPanel: document.querySelector("#initialBalancesPanel"),
@@ -238,7 +236,7 @@ function bindEvents() {
   elements.closeInitialBalancesButton.addEventListener("click", () => {
     setInitialBalancesPanelOpen(false);
   });
-  elements.closeCreditCardInvoiceButton.addEventListener("click", handleCreditCardInvoiceClose);
+  elements.payCreditCardInvoiceButton.addEventListener("click", handleCreditCardInvoicePayment);
   elements.initialBalancesForm.addEventListener("submit", handleInitialBalancesSubmit);
   elements.entryForm.addEventListener("submit", handleEntrySubmit);
   elements.searchInput.addEventListener("input", () => renderEntries());
@@ -472,7 +470,6 @@ function createEmptyState(selectedMonth = formatMonthInput(today)) {
     selectedMonth,
     transactions: [],
     recurringRules: [],
-    creditCardClosedMonths: [],
     balances: {
       currentBalance: 0,
       emergencyFund: 0,
@@ -488,7 +485,6 @@ function clearLocalFinancialData({ preserveLegacyImport = false } = {}) {
   state.selectedMonth = emptyState.selectedMonth;
   state.transactions = emptyState.transactions;
   state.recurringRules = emptyState.recurringRules;
-  state.creditCardClosedMonths = emptyState.creditCardClosedMonths;
   state.balances = emptyState.balances;
 
   if (!preserveLegacyImport) {
@@ -517,7 +513,6 @@ async function loadCloudState({ migrateLegacy = false, quiet = false } = {}) {
     let remoteTransactions = await fetchCloudTransactions();
     let remoteRecurringRules = await fetchCloudRecurringRules();
     const remoteBalances = await fetchCloudBalances();
-    const localCreditCardClosedMonths = normalizeClosedMonths(state.creditCardClosedMonths);
 
     if (migrateLegacy) {
       const migrated = await migrateLegacyDataToCloud(remoteTransactions, remoteRecurringRules);
@@ -529,7 +524,6 @@ async function loadCloudState({ migrateLegacy = false, quiet = false } = {}) {
 
     state.transactions = remoteTransactions;
     state.recurringRules = remoteRecurringRules;
-    state.creditCardClosedMonths = localCreditCardClosedMonths;
     state.balances = remoteBalances;
     saveState();
     hydrateInitialBalanceInputs();
@@ -1118,7 +1112,6 @@ function loadState() {
       recurringRules: Array.isArray(parsed.recurringRules)
         ? parsed.recurringRules.map(normalizeRecurringRule).filter(Boolean)
         : [],
-      creditCardClosedMonths: normalizeClosedMonths(parsed.creditCardClosedMonths),
       balances: normalizeBalances(parsed.balances),
     };
   } catch (error) {
@@ -1133,16 +1126,6 @@ function normalizeBalances(balances) {
     emergencyFund: normalizeMoneyValue(balances?.emergencyFund),
     investments: normalizeMoneyValue(balances?.investments),
   };
-}
-
-function normalizeClosedMonths(months) {
-  if (!Array.isArray(months)) {
-    return [];
-  }
-
-  return Array.from(
-    new Set(months.map((month) => String(month || "")).filter((month) => /^\d{4}-\d{2}$/.test(month))),
-  ).sort();
 }
 
 function normalizeMoneyValue(value) {
@@ -1166,8 +1149,6 @@ function normalizeCategoryLabel(category) {
     abatimentocartao: CREDIT_CARD_CATEGORIES.payment,
     entradacartao: CREDIT_CARD_CATEGORIES.payment,
     entradanocartao: CREDIT_CARD_CATEGORIES.payment,
-    faturacartaofechada: CREDIT_CARD_CATEGORIES.closed,
-    fechamentofatura: CREDIT_CARD_CATEGORIES.closed,
     salario: "Salário",
     caixadeemergencia: ALLOCATION_CATEGORIES.emergencyFund,
     emergencia: ALLOCATION_CATEGORIES.emergencyFund,
@@ -1205,10 +1186,6 @@ function normalizeCategoryLabel(category) {
 
   if (isCreditCardPaymentKey(normalized)) {
     return CREDIT_CARD_CATEGORIES.payment;
-  }
-
-  if (isCreditCardClosedKey(normalized)) {
-    return CREDIT_CARD_CATEGORIES.closed;
   }
 
   if (isCreditCardPurchaseKey(normalized)) {
@@ -1441,14 +1418,28 @@ function parseMoneyInput(value) {
   return Number.parseFloat(String(value || "0").replace(",", ".")) || 0;
 }
 
-async function handleCreditCardInvoiceClose() {
-  const monthToClose = getCreditCardEntryMonth();
-  const closeEntry = buildSingleEntry({
+async function handleCreditCardInvoicePayment() {
+  const invoiceAmount = getCreditCardBalanceForMonth(state.selectedMonth);
+
+  if (invoiceAmount <= 0) {
+    setLocalModeNotice("Nenhuma fatura em aberto para pagar neste mês.");
+    return;
+  }
+
+  const confirmed = window.confirm(
+    `Essa fatura será paga e ${formatCurrency(invoiceAmount)} será descontado do saldo atual. Deseja continuar?`,
+  );
+
+  if (!confirmed) {
+    return;
+  }
+
+  const entry = buildSingleEntry({
     type: "expense",
-    amount: 0.01,
-    category: CREDIT_CARD_CATEGORIES.closed,
-    date: getCreditCardEntryDate(monthToClose),
-    note: `Fatura fechada em ${formatMonthLabel(monthToClose)}`,
+    amount: invoiceAmount,
+    category: CREDIT_CARD_CATEGORIES.payment,
+    date: getCreditCardEntryDate(state.selectedMonth),
+    note: `Pagamento da fatura de ${formatMonthLabel(state.selectedMonth)}`,
   });
 
   try {
@@ -1456,31 +1447,26 @@ async function handleCreditCardInvoiceClose() {
     setCreditCardBusy(true);
 
     if (shouldUseCloudPersistence()) {
-      setSyncNotice("Sincronizando", "Fechando a fatura na nuvem...", "warning");
-      await upsertCloudTransactions([closeEntry]);
+      setSyncNotice("Sincronizando", "Pagando fatura do cartão na nuvem...", "warning");
+      await upsertCloudTransactions([entry]);
       lastCloudSyncAt = new Date();
     }
 
-    state.transactions = [closeEntry, ...state.transactions];
+    state.transactions = [entry, ...state.transactions];
   } catch (error) {
-    handleCloudError("Não consegui fechar a fatura do cartão.", error);
+    handleCloudError("Não consegui pagar a fatura do cartão.", error);
     return;
   } finally {
     creditCardBusy = false;
     setCreditCardBusy(false);
   }
 
-  state.creditCardClosedMonths = normalizeClosedMonths([
-    ...(state.creditCardClosedMonths || []),
-    monthToClose,
-  ]);
-  moveToNextMonth();
   saveState();
   renderApp();
   if (shouldUseCloudPersistence()) {
-    setSyncNotice("Sincronizado", "Fatura fechada. Novos lançamentos entram no próximo mês.", "success");
+    setSyncNotice("Sincronizado", "Fatura paga e descontada do saldo atual.", "success");
   } else {
-    setLocalModeNotice("Fatura fechada. Novos lançamentos entram no próximo mês.");
+    setLocalModeNotice("Fatura paga e descontada do saldo atual.");
   }
 }
 
@@ -1489,7 +1475,7 @@ async function saveCreditCardPurchase(amount, label) {
     return;
   }
 
-  const targetMonth = getCreditCardEntryMonth();
+  const targetMonth = state.selectedMonth;
   const note = label || "Cartão de crédito";
   const entry = buildSingleEntry({
     type: "expense",
@@ -1531,7 +1517,7 @@ async function saveCreditCardPurchase(amount, label) {
 }
 
 function setCreditCardBusy(isBusy) {
-  elements.closeCreditCardInvoiceButton.disabled = isBusy;
+  elements.payCreditCardInvoiceButton.disabled = isBusy;
 }
 
 function populateMonthOptions() {
@@ -1721,7 +1707,7 @@ async function handleEntrySubmit(event) {
     }
 
     await saveCreditCardPurchase(amount, String(formData.get("categoryCustom") || "").trim());
-    resetEntryForm(getCreditCardEntryDate(state.selectedMonth));
+    resetEntryForm(elements.dateInput.value || formatDateInput(today));
     return;
   }
 
@@ -2105,8 +2091,7 @@ function renderSummary() {
   const income = sumCurrentImpactsByDirection(monthEntries, "income");
   const expense = sumCurrentImpactsByDirection(monthEntries, "expense");
   const currentBalance = getCurrentBalanceThroughMonth(state.selectedMonth);
-  const creditCardMonth = getCreditCardEntryMonth();
-  const creditCardBalance = getCreditCardBalanceForMonth(creditCardMonth);
+  const creditCardBalance = getCreditCardBalanceForMonth(state.selectedMonth);
   const emergencyBalance = getAllocationBalanceThroughMonth("emergency", state.selectedMonth);
   const investmentsBalance = getAllocationBalanceThroughMonth("investments", state.selectedMonth);
 
@@ -2116,9 +2101,9 @@ function renderSummary() {
   elements.expenseValue.textContent = formatCurrency(expense);
   elements.creditCardValue.textContent = formatCurrency(creditCardBalance);
   elements.creditCardHint.textContent =
-    creditCardMonth === state.selectedMonth
-      ? `Fatura aberta em ${formatMonthLabel(creditCardMonth)}.`
-      : `Fatura de ${formatMonthLabel(state.selectedMonth)} fechada. Lançando em ${formatMonthLabel(creditCardMonth)}.`;
+    creditCardBalance > 0
+      ? `Fatura em aberto em ${formatMonthLabel(state.selectedMonth)}.`
+      : `Fatura zerada em ${formatMonthLabel(state.selectedMonth)}.`;
   elements.emergencyFundValue.textContent = formatCurrency(emergencyBalance);
   elements.investmentsValue.textContent = formatCurrency(investmentsBalance);
   elements.balanceHint.textContent =
@@ -2471,18 +2456,14 @@ function getSelectedEntryType() {
 }
 
 function getTransactionsForMonth(monthString) {
-  const directEntries = state.transactions.filter(
-    (entry) => entry.date.startsWith(monthString) && !isCreditCardCloseEntry(entry),
-  );
+  const directEntries = state.transactions.filter((entry) => entry.date.startsWith(monthString));
   const recurringEntries = getGeneratedRecurringTransactions(monthString);
 
   return [...directEntries, ...recurringEntries].sort(compareTransactionsDesc);
 }
 
 function getCurrentBalanceThroughMonth(monthString) {
-  const directEntries = state.transactions.filter(
-    (entry) => entry.date.slice(0, 7) <= monthString && !isCreditCardCloseEntry(entry),
-  );
+  const directEntries = state.transactions.filter((entry) => entry.date.slice(0, 7) <= monthString);
   const recurringEntries = getGeneratedRecurringTransactionsThroughMonth(monthString);
 
   const transactionBalance = [...directEntries, ...recurringEntries].reduce((total, entry) => {
@@ -2677,13 +2658,11 @@ function getAllocationKind(entry) {
 function getCurrentBalanceImpact(entry) {
   const categoryKey = normalizeCategoryKey(entry.category);
 
-  if (isCreditCardClosedKey(categoryKey)) {
+  if (isCreditCardPurchaseKey(categoryKey)) {
     return 0;
   }
 
-  if (isCreditCardPaymentKey(categoryKey)) {
-    return 0;
-  }
+  // Pagamento da fatura é uma saída real da conta.
 
   if (isEmergencyCategoryKey(categoryKey)) {
     return entry.type === "income" ? -entry.amount : entry.amount;
@@ -2702,10 +2681,6 @@ function getCurrentBalanceImpact(entry) {
 
 function getCreditCardBalanceImpact(entry) {
   const categoryKey = normalizeCategoryKey(entry.category);
-
-  if (isCreditCardClosedKey(categoryKey)) {
-    return 0;
-  }
 
   if (isCreditCardPaymentKey(categoryKey)) {
     return -entry.amount;
@@ -2769,14 +2744,6 @@ function isCreditCardPaymentKey(categoryKey) {
   return CREDIT_CARD_PAYMENT_KEYS.has(categoryKey);
 }
 
-function isCreditCardClosedKey(categoryKey) {
-  return CREDIT_CARD_CLOSED_KEYS.has(categoryKey);
-}
-
-function isCreditCardCloseEntry(entry) {
-  return isCreditCardClosedKey(normalizeCategoryKey(entry.category));
-}
-
 function getRollingMonths(count) {
   const months = [];
   const [year, month] = state.selectedMonth.split("-").map(Number);
@@ -2821,37 +2788,6 @@ function getPreviousMonth(monthString) {
   const [year, month] = monthString.split("-").map(Number);
   const previous = new Date(year, month - 2, 1);
   return formatMonthInput(previous);
-}
-
-function getNextMonth(monthString) {
-  const [year, month] = monthString.split("-").map(Number);
-  const next = new Date(year, month, 1);
-  return formatMonthInput(next);
-}
-
-function moveToNextMonth() {
-  state.selectedMonth = getNextMonth(state.selectedMonth);
-  populateYearOptions(Number(state.selectedMonth.slice(0, 4)));
-  syncPeriodInputs();
-}
-
-function getCreditCardEntryMonth() {
-  let month = state.selectedMonth;
-  const closedMonths = new Set(getCreditCardClosedMonths());
-
-  while (closedMonths.has(month)) {
-    month = getNextMonth(month);
-  }
-
-  return month;
-}
-
-function getCreditCardClosedMonths() {
-  const markerMonths = state.transactions
-    .filter(isCreditCardCloseEntry)
-    .map((entry) => entry.date.slice(0, 7));
-
-  return normalizeClosedMonths([...(state.creditCardClosedMonths || []), ...markerMonths]);
 }
 
 function getCreditCardEntryDate(monthString) {
