@@ -1,13 +1,15 @@
-const CACHE_NAME = "controle-financeiro-v22";
+const CACHE_NAME = "controle-financeiro-v23";
 const APP_SHELL = [
   "./",
   "./index.html",
   "./conta.html",
   "./saldos.html",
+  "./radar.html",
   "./styles.css",
   "./app.js",
   "./conta.js",
   "./saldos.js",
+  "./radar.js",
   "./pwa.js",
   "./supabase-config.js",
   "./manifest.webmanifest",

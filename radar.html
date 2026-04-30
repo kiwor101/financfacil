@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Radar de investimentos | Controle financeiro</title>
+    <meta
+      name="description"
+      content="Acompanhe indicadores e ideias de estudo para investir com mais segurança."
+    />
+    <meta name="theme-color" content="#0d8b72" />
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="icon" href="./icon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="./icon.svg" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="page-glow page-glow-left" aria-hidden="true"></div>
+    <div class="page-glow page-glow-right" aria-hidden="true"></div>
+
+    <main class="radar-shell">
+      <section class="account-card reveal">
+        <a class="account-back" href="./index.html">Voltar para o app</a>
+
+        <div class="account-heading">
+          <h1>Radar de investimentos</h1>
+          <p>
+            Indicadores rápidos para estudar renda fixa, dólar e bitcoin sem sair do app.
+          </p>
+        </div>
+
+        <div class="radar-status" id="radarStatus">Carregando indicadores...</div>
+
+        <section class="radar-grid" aria-label="Indicadores do mercado">
+          <article class="radar-card">
+            <span>Selic</span>
+            <strong id="selicValue">--</strong>
+            <small>Taxa básica de juros.</small>
+          </article>
+
+          <article class="radar-card">
+            <span>CDI</span>
+            <strong id="cdiValue">--</strong>
+            <small>Referência da renda fixa.</small>
+          </article>
+
+          <article class="radar-card">
+            <span>IPCA</span>
+            <strong id="ipcaValue">--</strong>
+            <small>Inflação acumulada usada como referência.</small>
+          </article>
+
+          <article class="radar-card">
+            <span>Dólar</span>
+            <strong id="dollarValue">--</strong>
+            <small id="dollarVariation">Cotação USD/BRL.</small>
+          </article>
+
+          <article class="radar-card">
+            <span>Bitcoin</span>
+            <strong id="bitcoinValue">--</strong>
+            <small id="bitcoinVariation">Cotação BTC/BRL.</small>
+          </article>
+        </section>
+
+        <section class="radar-advice">
+          <h2>Leitura rápida</h2>
+          <div id="radarTips" class="radar-tips">
+            <p>Buscando dicas com base nos indicadores...</p>
+          </div>
+        </section>
+
+        <section class="radar-simulator">
+          <div>
+            <h2>Simulador rápido de CDI</h2>
+            <p>Veja uma estimativa bruta anual para comparar ofertas de bancos digitais.</p>
+          </div>
+
+          <label class="field">
+            <span class="field-label">Valor para simular</span>
+            <input id="radarAmountInput" inputmode="decimal" min="0" step="100" type="number" value="1000" />
+          </label>
+
+          <div class="radar-sim-results" id="radarSimResults"></div>
+        </section>
+
+        <section class="radar-links">
+          <h2>Fontes para continuar estudando</h2>
+          <a href="https://www.tesourodireto.com.br/" target="_blank" rel="noopener noreferrer">
+            Tesouro Direto oficial
+          </a>
+          <a href="https://valorinveste.globo.com/newsletter/" target="_blank" rel="noopener noreferrer">
+            Newsletters do Valor Investe
+          </a>
+          <a href="https://www.bcb.gov.br/" target="_blank" rel="noopener noreferrer">
+            Banco Central do Brasil
+          </a>
+        </section>
+      </section>
+    </main>
+
+    <script src="./radar.js"></script>
+  </body>
+</html>

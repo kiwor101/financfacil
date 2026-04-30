@@ -233,7 +233,7 @@ select {
 
 .summary-grid {
   display: grid;
-  grid-template-columns: 1.35fr repeat(6, minmax(0, 1fr));
+  grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 1rem;
   margin: 1rem 0;
 }
@@ -381,6 +381,17 @@ select {
   align-items: center;
 }
 
+.radar-shell {
+  position: relative;
+  z-index: 1;
+  width: min(100% - 1.2rem, 900px);
+  min-height: 100vh;
+  margin: 0 auto;
+  padding: 1.2rem 0;
+  display: grid;
+  align-items: center;
+}
+
 .account-card {
   border: 1px solid var(--surface-border);
   background: var(--surface);
@@ -492,6 +503,7 @@ select {
 }
 
 .summary-card-main {
+  grid-column: span 2;
   min-height: 8.2rem;
 }
 
@@ -513,7 +525,7 @@ select {
 .summary-card::after {
   content: "";
   position: absolute;
-  inset: auto -2rem -2.2rem auto;
+  inset: auto 0 0 auto;
   width: 6.4rem;
   height: 6.4rem;
   border-radius: 999px;
@@ -545,7 +557,7 @@ select {
 }
 
 .summary-card-main .summary-value {
-  font-size: clamp(1.75rem, 2.45vw, 2.15rem);
+  font-size: clamp(1.85rem, 3vw, 2.25rem);
   letter-spacing: -0.02em;
 }
 
@@ -1246,6 +1258,126 @@ select {
   text-underline-offset: 0.18rem;
 }
 
+.radar-status {
+  margin: 0.75rem 0 1rem;
+  padding: 0.65rem 0.78rem;
+  border-radius: var(--radius-sm);
+  background: rgba(21, 49, 41, 0.08);
+  color: var(--muted);
+  font-size: 0.86rem;
+}
+
+.radar-status[data-tone="success"] {
+  background: rgba(27, 143, 101, 0.12);
+  color: var(--income);
+}
+
+.radar-status[data-tone="error"] {
+  background: rgba(180, 68, 68, 0.12);
+  color: var(--danger);
+}
+
+.radar-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.7rem;
+}
+
+.radar-card,
+.radar-advice,
+.radar-simulator,
+.radar-links {
+  border: 1px solid rgba(36, 54, 46, 0.09);
+  background: rgba(255, 255, 255, 0.54);
+  border-radius: var(--radius-md);
+}
+
+.radar-card {
+  min-height: 7.1rem;
+  padding: 0.78rem;
+}
+
+.radar-card span,
+.radar-card small {
+  display: block;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.radar-card strong {
+  display: block;
+  margin: 0.55rem 0 0.3rem;
+  font-family: var(--headline);
+  font-size: 1.12rem;
+}
+
+.radar-advice,
+.radar-simulator,
+.radar-links {
+  margin-top: 0.85rem;
+  padding: 0.9rem;
+}
+
+.radar-advice h2,
+.radar-simulator h2,
+.radar-links h2 {
+  margin: 0 0 0.5rem;
+  font-size: 1rem;
+}
+
+.radar-tips {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.radar-tips p,
+.radar-simulator p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.radar-simulator {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(150px, 0.35fr);
+  gap: 0.8rem;
+}
+
+.radar-sim-results {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.55rem;
+}
+
+.radar-sim-results article {
+  padding: 0.72rem;
+  border-radius: var(--radius-sm);
+  background: rgba(13, 139, 114, 0.1);
+}
+
+.radar-sim-results strong,
+.radar-sim-results span,
+.radar-links a {
+  display: block;
+}
+
+.radar-sim-results span {
+  margin-top: 0.25rem;
+  color: var(--muted);
+  font-size: 0.84rem;
+}
+
+.radar-links {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.radar-links a {
+  color: var(--accent-strong);
+  font-weight: 800;
+}
+
 .app-footer {
   display: flex;
   justify-content: space-between;
@@ -1297,6 +1429,15 @@ select {
 
   .summary-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .radar-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .radar-simulator,
+  .radar-sim-results {
+    grid-template-columns: 1fr;
   }
 
   .summary-card-main {
