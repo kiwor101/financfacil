@@ -233,7 +233,7 @@ select {
 
 .summary-grid {
   display: grid;
-  grid-template-columns: 1.35fr repeat(4, minmax(0, 1fr));
+  grid-template-columns: 1.35fr repeat(5, minmax(0, 1fr));
   gap: 1rem;
   margin: 1rem 0;
 }
@@ -505,6 +505,11 @@ select {
   padding: 0.85rem;
 }
 
+.summary-card-credit {
+  min-height: 9.4rem;
+  padding: 0.85rem;
+}
+
 .summary-card::after {
   content: "";
   position: absolute;
@@ -542,7 +547,8 @@ select {
 }
 
 .summary-card-subtle .summary-value,
-.summary-card-wallet .summary-value {
+.summary-card-wallet .summary-value,
+.summary-card-credit .summary-value {
   font-size: 1.16rem;
 }
 
@@ -589,6 +595,10 @@ select {
   background: linear-gradient(160deg, rgba(204, 99, 66, 0.15), rgba(255, 250, 244, 0.88));
 }
 
+.tone-credit-card {
+  background: linear-gradient(160deg, rgba(204, 99, 66, 0.17), rgba(255, 248, 242, 0.9));
+}
+
 .tone-commitment {
   background: linear-gradient(160deg, rgba(52, 95, 184, 0.15), rgba(252, 252, 255, 0.9));
 }
@@ -613,6 +623,10 @@ select {
   background: linear-gradient(160deg, rgba(240, 148, 114, 0.16), rgba(16, 27, 24, 0.92));
 }
 
+:root[data-theme="dark"] .tone-credit-card {
+  background: linear-gradient(160deg, rgba(240, 148, 114, 0.18), rgba(16, 27, 24, 0.92));
+}
+
 :root[data-theme="dark"] .tone-commitment,
 :root[data-theme="dark"] .tone-investments {
   background: linear-gradient(160deg, rgba(144, 179, 255, 0.15), rgba(16, 27, 24, 0.92));
@@ -628,6 +642,40 @@ select {
 
 .tone-investments .summary-value {
   color: var(--investment);
+}
+
+.tone-credit-card .summary-value {
+  color: var(--expense);
+}
+
+.credit-card-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.35rem;
+  margin-top: 0.52rem;
+}
+
+.credit-card-actions input {
+  width: 100%;
+  min-height: 2rem;
+  padding: 0.42rem 0.55rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(36, 54, 46, 0.12);
+  background: rgba(255, 255, 255, 0.72);
+  color: var(--ink);
+}
+
+.credit-card-action,
+.credit-card-paid {
+  min-height: 2rem;
+  padding: 0.42rem 0.62rem;
+  font-size: 0.76rem;
+}
+
+.credit-card-paid {
+  width: 100%;
+  margin-top: 0.4rem;
+  color: var(--expense);
 }
 
 .content-grid {
@@ -1316,7 +1364,8 @@ select {
   }
 
   .summary-card-subtle .summary-value,
-  .summary-card-wallet .summary-value {
+  .summary-card-wallet .summary-value,
+  .summary-card-credit .summary-value {
     font-size: 1.05rem;
   }
 

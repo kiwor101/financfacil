@@ -164,6 +164,27 @@
           <span class="summary-footnote">No período.</span>
         </article>
 
+        <article class="summary-card summary-card-credit tone-credit-card">
+          <span class="summary-label">Cartão de crédito</span>
+          <strong class="summary-value" id="creditCardValue">R$ 0,00</strong>
+          <span class="summary-footnote" id="creditCardHint">Fatura em aberto.</span>
+          <form class="credit-card-actions" id="creditCardPaymentForm">
+            <input
+              aria-label="Valor para abater no cartão"
+              id="creditCardPaymentInput"
+              inputmode="decimal"
+              min="0.01"
+              placeholder="0,00"
+              step="0.01"
+              type="number"
+            />
+            <button class="ghost-button credit-card-action" type="submit">Abater</button>
+          </form>
+          <button class="ghost-button credit-card-paid" id="payCreditCardButton" type="button">
+            Fatura paga e virar mês
+          </button>
+        </article>
+
         <article class="summary-card summary-card-wallet tone-emergency">
           <span class="summary-label">Caixa de emergência</span>
           <strong class="summary-value" id="emergencyFundValue">R$ 0,00</strong>
