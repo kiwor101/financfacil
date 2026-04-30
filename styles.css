@@ -648,33 +648,15 @@ select {
   color: var(--expense);
 }
 
-.credit-card-actions {
-  display: grid;
-  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1fr) auto;
-  gap: 0.35rem;
-  margin-top: 0.52rem;
-}
-
-.credit-card-actions input {
-  width: 100%;
-  min-height: 2rem;
-  padding: 0.42rem 0.55rem;
-  border-radius: var(--radius-sm);
-  border: 1px solid rgba(36, 54, 46, 0.12);
-  background: rgba(255, 255, 255, 0.72);
-  color: var(--ink);
-}
-
-.credit-card-action,
 .credit-card-paid {
-  min-height: 2rem;
-  padding: 0.42rem 0.62rem;
+  min-height: 1.8rem;
+  padding: 0.34rem 0.58rem;
   font-size: 0.76rem;
 }
 
 .credit-card-paid {
-  width: 100%;
-  margin-top: 0.4rem;
+  width: auto;
+  margin-top: 0.55rem;
   color: var(--expense);
 }
 
@@ -1367,10 +1349,6 @@ select {
   .summary-card-wallet .summary-value,
   .summary-card-credit .summary-value {
     font-size: 1.05rem;
-  }
-
-  .credit-card-actions {
-    grid-template-columns: 1fr;
   }
 
   .summary-footnote,

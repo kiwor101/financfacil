@@ -75,6 +75,7 @@ const categories = {
     ALLOCATION_CATEGORIES.investments,
     "Outros",
   ],
+  credit: [],
 };
 
 const monthNamesShort = [
@@ -148,9 +149,6 @@ const elements = {
   expenseValue: document.querySelector("#expenseValue"),
   creditCardValue: document.querySelector("#creditCardValue"),
   creditCardHint: document.querySelector("#creditCardHint"),
-  creditCardQuickForm: document.querySelector("#creditCardQuickForm"),
-  creditCardAmountInput: document.querySelector("#creditCardAmountInput"),
-  creditCardCategoryInput: document.querySelector("#creditCardCategoryInput"),
   closeCreditCardInvoiceButton: document.querySelector("#closeCreditCardInvoiceButton"),
   emergencyFundValue: document.querySelector("#emergencyFundValue"),
   investmentsValue: document.querySelector("#investmentsValue"),
@@ -240,7 +238,6 @@ function bindEvents() {
   elements.closeInitialBalancesButton.addEventListener("click", () => {
     setInitialBalancesPanelOpen(false);
   });
-  elements.creditCardQuickForm.addEventListener("submit", handleCreditCardQuickSubmit);
   elements.closeCreditCardInvoiceButton.addEventListener("click", handleCreditCardInvoiceClose);
   elements.initialBalancesForm.addEventListener("submit", handleInitialBalancesSubmit);
   elements.entryForm.addEventListener("submit", handleEntrySubmit);
@@ -262,6 +259,7 @@ function bindEvents() {
   elements.entryForm.querySelectorAll('input[name="entryType"]').forEach((input) => {
     input.addEventListener("change", () => {
       populateCategoryOptions(getSelectedEntryType());
+      updateCreditCardEntryUI();
       updatePlanModeUI();
     });
   });
@@ -1443,18 +1441,6 @@ function parseMoneyInput(value) {
   return Number.parseFloat(String(value || "0").replace(",", ".")) || 0;
 }
 
-async function handleCreditCardQuickSubmit(event) {
-  event.preventDefault();
-  const amount = parseMoneyInput(elements.creditCardAmountInput.value);
-  const label = elements.creditCardCategoryInput.value.trim();
-
-  if (!amount || amount <= 0) {
-    return;
-  }
-
-  await saveCreditCardPurchase(amount, label);
-}
-
 async function handleCreditCardInvoiceClose() {
   const monthToClose = getCreditCardEntryMonth();
   const closeEntry = buildSingleEntry({
@@ -1524,8 +1510,6 @@ async function saveCreditCardPurchase(amount, label) {
     }
 
     state.transactions = [entry, ...state.transactions];
-    elements.creditCardAmountInput.value = "";
-    elements.creditCardCategoryInput.value = "";
     state.selectedMonth = targetMonth;
 
     saveState();
@@ -1547,12 +1531,7 @@ async function saveCreditCardPurchase(amount, label) {
 }
 
 function setCreditCardBusy(isBusy) {
-  elements.creditCardAmountInput.disabled = isBusy;
-  elements.creditCardCategoryInput.disabled = isBusy;
   elements.closeCreditCardInvoiceButton.disabled = isBusy;
-  const submitButton = elements.creditCardQuickForm.querySelector("button");
-  submitButton.disabled = isBusy;
-  submitButton.textContent = isBusy ? "..." : "Lancar";
 }
 
 function populateMonthOptions() {
@@ -1641,9 +1620,19 @@ function populateCategoryOptions(type) {
 }
 
 function updateCustomCategoryUI() {
+  if (getSelectedEntryType() === "credit") {
+    elements.categoryCustomField.hidden = false;
+    elements.categoryCustomInput.required = false;
+    elements.categoryCustomInput.placeholder = "Ex.: mercado";
+    elements.categoryCustomField.querySelector(".field-label").textContent = "Categoria";
+    return;
+  }
+
   const isCustom = elements.categoryInput.value === "Outros";
   elements.categoryCustomField.hidden = !isCustom;
   elements.categoryCustomInput.required = isCustom;
+  elements.categoryCustomInput.placeholder = "Digite a categoria";
+  elements.categoryCustomField.querySelector(".field-label").textContent = "Qual?";
 
   if (!isCustom) {
     elements.categoryCustomInput.value = "";
@@ -1652,6 +1641,13 @@ function updateCustomCategoryUI() {
 
 function updatePlanModeUI() {
   const type = getSelectedEntryType();
+  if (type === "credit") {
+    elements.planBox.hidden = true;
+    elements.installmentsField.hidden = true;
+    elements.planHelper.textContent = "";
+    return;
+  }
+
   const installmentOption = elements.planTypeInput.querySelector('option[value="installment"]');
 
   installmentOption.disabled = type === "income";
@@ -1663,6 +1659,23 @@ function updatePlanModeUI() {
   elements.planBox.hidden = planType === "single";
   elements.installmentsField.hidden = planType !== "installment";
   elements.planHelper.textContent = getPlanHelperText();
+}
+
+function updateCreditCardEntryUI() {
+  const isCreditCard = getSelectedEntryType() === "credit";
+
+  elements.categoryInput.closest(".field").hidden = isCreditCard;
+  elements.dateInput.closest(".field").hidden = isCreditCard;
+  elements.planTypeInput.closest(".field").hidden = isCreditCard;
+  elements.noteInput.closest(".field").hidden = isCreditCard;
+  elements.dateInput.required = !isCreditCard;
+  elements.categoryInput.required = !isCreditCard;
+  elements.submitButton.textContent = editingEntry
+    ? "Salvar edição"
+    : isCreditCard
+      ? "Lançar no cartão"
+      : "Salvar";
+  updateCustomCategoryUI();
 }
 
 function getPlanHelperText() {
@@ -1701,6 +1714,16 @@ async function handleEntrySubmit(event) {
   const date = String(formData.get("date"));
   const note = String(formData.get("note") || "").trim();
   const planType = String(formData.get("planType"));
+
+  if (type === "credit") {
+    if (!amount || amount <= 0) {
+      return;
+    }
+
+    await saveCreditCardPurchase(amount, String(formData.get("categoryCustom") || "").trim());
+    resetEntryForm(getCreditCardEntryDate(state.selectedMonth));
+    return;
+  }
 
   if (!amount || amount <= 0 || !category || !date) {
     return;
@@ -1890,11 +1913,12 @@ async function updateInstallmentGroup(groupId, { type, amount, category, date, n
 
 function setEntryBusy(isBusy) {
   elements.submitButton.disabled = isBusy;
-  elements.submitButton.textContent = isBusy
-    ? "Salvando..."
-    : editingEntry
-      ? "Salvar edição"
-      : "Salvar";
+  if (isBusy) {
+    elements.submitButton.textContent = "Salvando...";
+    return;
+  }
+
+  updateCreditCardEntryUI();
 }
 
 function buildSingleEntry({ type, amount, category, date, note }) {
@@ -2005,6 +2029,7 @@ function fillEntryFormForEdit({ type, amount, category, date, note, planType, in
   elements.installmentsInput.value = String(installments || 2);
   elements.cancelEditButton.hidden = false;
   elements.submitButton.textContent = "Salvar edição";
+  updateCreditCardEntryUI();
   updatePlanModeUI();
   elements.amountInput.focus();
 }
@@ -2035,6 +2060,7 @@ function resetEntryForm(referenceDate) {
   elements.cancelEditButton.hidden = true;
   elements.submitButton.textContent = "Salvar";
   populateCategoryOptions("expense");
+  updateCreditCardEntryUI();
   updatePlanModeUI();
   elements.amountInput.focus();
 }

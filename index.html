@@ -168,24 +168,6 @@
           <span class="summary-label">Cartão de crédito</span>
           <strong class="summary-value" id="creditCardValue">R$ 0,00</strong>
           <span class="summary-footnote" id="creditCardHint">Fatura em aberto.</span>
-          <form class="credit-card-actions" id="creditCardQuickForm">
-            <input
-              aria-label="Valor do cartao"
-              id="creditCardAmountInput"
-              inputmode="decimal"
-              min="0.01"
-              placeholder="0,00"
-              step="0.01"
-              type="number"
-            />
-            <input
-              aria-label="Categoria do cartao"
-              id="creditCardCategoryInput"
-              placeholder="Ex.: mercado"
-              type="text"
-            />
-            <button class="ghost-button credit-card-action" type="submit">Lancar</button>
-          </form>
           <button class="ghost-button credit-card-paid" id="closeCreditCardInvoiceButton" type="button">
             Fechar fatura do mes
           </button>
@@ -283,6 +265,10 @@
               <label>
                 <input name="entryType" type="radio" value="income" />
                 <span>Entrada</span>
+              </label>
+              <label>
+                <input name="entryType" type="radio" value="credit" />
+                <span>CartÃ£o</span>
               </label>
             </fieldset>
 
