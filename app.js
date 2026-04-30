@@ -13,6 +13,7 @@ const ALLOCATION_CATEGORIES = {
 const CREDIT_CARD_CATEGORIES = {
   purchase: "Cartão de crédito",
   payment: "Pagamento cartão de crédito",
+  closed: "Fatura cartão fechada",
 };
 const EMERGENCY_CATEGORY_KEYS = new Set([
   "caixadeemergencia",
@@ -46,7 +47,7 @@ const CREDIT_CARD_PAYMENT_KEYS = new Set([
   "entradacartao",
   "entradanocartao",
 ]);
-
+const CREDIT_CARD_CLOSED_KEYS = new Set(["faturacartaofechada", "fechamentofatura"]);
 const CLOUD_TABLES = {
   transactions: "transactions",
   recurringRules: "recurring_rules",
@@ -61,7 +62,6 @@ const categories = {
     "Saúde",
     "Lazer",
     "Educação",
-    CREDIT_CARD_CATEGORIES.purchase,
     "Imprevistos",
     ALLOCATION_CATEGORIES.emergencyFund,
     ALLOCATION_CATEGORIES.investmentWithdrawal,
@@ -73,7 +73,6 @@ const categories = {
     "Presentes",
     ALLOCATION_CATEGORIES.emergencyFund,
     ALLOCATION_CATEGORIES.investments,
-    CREDIT_CARD_CATEGORIES.payment,
     "Outros",
   ],
 };
@@ -149,9 +148,10 @@ const elements = {
   expenseValue: document.querySelector("#expenseValue"),
   creditCardValue: document.querySelector("#creditCardValue"),
   creditCardHint: document.querySelector("#creditCardHint"),
-  creditCardPaymentForm: document.querySelector("#creditCardPaymentForm"),
-  creditCardPaymentInput: document.querySelector("#creditCardPaymentInput"),
-  payCreditCardButton: document.querySelector("#payCreditCardButton"),
+  creditCardQuickForm: document.querySelector("#creditCardQuickForm"),
+  creditCardAmountInput: document.querySelector("#creditCardAmountInput"),
+  creditCardCategoryInput: document.querySelector("#creditCardCategoryInput"),
+  closeCreditCardInvoiceButton: document.querySelector("#closeCreditCardInvoiceButton"),
   emergencyFundValue: document.querySelector("#emergencyFundValue"),
   investmentsValue: document.querySelector("#investmentsValue"),
   initialBalancesPanel: document.querySelector("#initialBalancesPanel"),
@@ -240,8 +240,8 @@ function bindEvents() {
   elements.closeInitialBalancesButton.addEventListener("click", () => {
     setInitialBalancesPanelOpen(false);
   });
-  elements.creditCardPaymentForm.addEventListener("submit", handleCreditCardPaymentSubmit);
-  elements.payCreditCardButton.addEventListener("click", handleCreditCardInvoicePaid);
+  elements.creditCardQuickForm.addEventListener("submit", handleCreditCardQuickSubmit);
+  elements.closeCreditCardInvoiceButton.addEventListener("click", handleCreditCardInvoiceClose);
   elements.initialBalancesForm.addEventListener("submit", handleInitialBalancesSubmit);
   elements.entryForm.addEventListener("submit", handleEntrySubmit);
   elements.searchInput.addEventListener("input", () => renderEntries());
@@ -474,6 +474,7 @@ function createEmptyState(selectedMonth = formatMonthInput(today)) {
     selectedMonth,
     transactions: [],
     recurringRules: [],
+    creditCardClosedMonths: [],
     balances: {
       currentBalance: 0,
       emergencyFund: 0,
@@ -489,6 +490,7 @@ function clearLocalFinancialData({ preserveLegacyImport = false } = {}) {
   state.selectedMonth = emptyState.selectedMonth;
   state.transactions = emptyState.transactions;
   state.recurringRules = emptyState.recurringRules;
+  state.creditCardClosedMonths = emptyState.creditCardClosedMonths;
   state.balances = emptyState.balances;
 
   if (!preserveLegacyImport) {
@@ -517,6 +519,7 @@ async function loadCloudState({ migrateLegacy = false, quiet = false } = {}) {
     let remoteTransactions = await fetchCloudTransactions();
     let remoteRecurringRules = await fetchCloudRecurringRules();
     const remoteBalances = await fetchCloudBalances();
+    const localCreditCardClosedMonths = normalizeClosedMonths(state.creditCardClosedMonths);
 
     if (migrateLegacy) {
       const migrated = await migrateLegacyDataToCloud(remoteTransactions, remoteRecurringRules);
@@ -528,6 +531,7 @@ async function loadCloudState({ migrateLegacy = false, quiet = false } = {}) {
 
     state.transactions = remoteTransactions;
     state.recurringRules = remoteRecurringRules;
+    state.creditCardClosedMonths = localCreditCardClosedMonths;
     state.balances = remoteBalances;
     saveState();
     hydrateInitialBalanceInputs();
@@ -1116,6 +1120,7 @@ function loadState() {
       recurringRules: Array.isArray(parsed.recurringRules)
         ? parsed.recurringRules.map(normalizeRecurringRule).filter(Boolean)
         : [],
+      creditCardClosedMonths: normalizeClosedMonths(parsed.creditCardClosedMonths),
       balances: normalizeBalances(parsed.balances),
     };
   } catch (error) {
@@ -1130,6 +1135,16 @@ function normalizeBalances(balances) {
     emergencyFund: normalizeMoneyValue(balances?.emergencyFund),
     investments: normalizeMoneyValue(balances?.investments),
   };
+}
+
+function normalizeClosedMonths(months) {
+  if (!Array.isArray(months)) {
+    return [];
+  }
+
+  return Array.from(
+    new Set(months.map((month) => String(month || "")).filter((month) => /^\d{4}-\d{2}$/.test(month))),
+  ).sort();
 }
 
 function normalizeMoneyValue(value) {
@@ -1153,6 +1168,8 @@ function normalizeCategoryLabel(category) {
     abatimentocartao: CREDIT_CARD_CATEGORIES.payment,
     entradacartao: CREDIT_CARD_CATEGORIES.payment,
     entradanocartao: CREDIT_CARD_CATEGORIES.payment,
+    faturacartaofechada: CREDIT_CARD_CATEGORIES.closed,
+    fechamentofatura: CREDIT_CARD_CATEGORIES.closed,
     salario: "Salário",
     caixadeemergencia: ALLOCATION_CATEGORIES.emergencyFund,
     emergencia: ALLOCATION_CATEGORIES.emergencyFund,
@@ -1190,6 +1207,10 @@ function normalizeCategoryLabel(category) {
 
   if (isCreditCardPaymentKey(normalized)) {
     return CREDIT_CARD_CATEGORIES.payment;
+  }
+
+  if (isCreditCardClosedKey(normalized)) {
+    return CREDIT_CARD_CATEGORIES.closed;
   }
 
   if (isCreditCardPurchaseKey(normalized)) {
@@ -1422,52 +1443,73 @@ function parseMoneyInput(value) {
   return Number.parseFloat(String(value || "0").replace(",", ".")) || 0;
 }
 
-async function handleCreditCardPaymentSubmit(event) {
+async function handleCreditCardQuickSubmit(event) {
   event.preventDefault();
-  const amount = parseMoneyInput(elements.creditCardPaymentInput.value);
+  const amount = parseMoneyInput(elements.creditCardAmountInput.value);
+  const label = elements.creditCardCategoryInput.value.trim();
 
   if (!amount || amount <= 0) {
     return;
   }
 
-  await saveCreditCardPayment(amount, {
-    note: "Abatimento da fatura",
-    advanceMonth: false,
-  });
+  await saveCreditCardPurchase(amount, label);
 }
 
-async function handleCreditCardInvoicePaid() {
-  const invoiceBalance = getCreditCardBalanceForMonth(state.selectedMonth);
+async function handleCreditCardInvoiceClose() {
+  const monthToClose = getCreditCardEntryMonth();
+  const closeEntry = buildSingleEntry({
+    type: "expense",
+    amount: 0.01,
+    category: CREDIT_CARD_CATEGORIES.closed,
+    date: getCreditCardEntryDate(monthToClose),
+    note: `Fatura fechada em ${formatMonthLabel(monthToClose)}`,
+  });
 
-  if (invoiceBalance > 0) {
-    await saveCreditCardPayment(invoiceBalance, {
-      note: `Fatura paga em ${formatMonthLabel(state.selectedMonth)}`,
-      advanceMonth: true,
-    });
+  try {
+    creditCardBusy = true;
+    setCreditCardBusy(true);
+
+    if (shouldUseCloudPersistence()) {
+      setSyncNotice("Sincronizando", "Fechando a fatura na nuvem...", "warning");
+      await upsertCloudTransactions([closeEntry]);
+      lastCloudSyncAt = new Date();
+    }
+
+    state.transactions = [closeEntry, ...state.transactions];
+  } catch (error) {
+    handleCloudError("Não consegui fechar a fatura do cartão.", error);
     return;
+  } finally {
+    creditCardBusy = false;
+    setCreditCardBusy(false);
   }
 
+  state.creditCardClosedMonths = normalizeClosedMonths([
+    ...(state.creditCardClosedMonths || []),
+    monthToClose,
+  ]);
   moveToNextMonth();
   saveState();
   renderApp();
   if (shouldUseCloudPersistence()) {
-    setSyncNotice("Sincronizado", "Fatura zerada. Cartão virado para o próximo mês.", "success");
+    setSyncNotice("Sincronizado", "Fatura fechada. Novos lançamentos entram no próximo mês.", "success");
   } else {
-    setLocalModeNotice("Fatura zerada. Cartão virado para o próximo mês.");
+    setLocalModeNotice("Fatura fechada. Novos lançamentos entram no próximo mês.");
   }
 }
 
-async function saveCreditCardPayment(amount, { note, advanceMonth }) {
+async function saveCreditCardPurchase(amount, label) {
   if (creditCardBusy) {
     return;
   }
 
-  const date = getCreditCardPaymentDate(state.selectedMonth);
+  const targetMonth = getCreditCardEntryMonth();
+  const note = label || "Cartão de crédito";
   const entry = buildSingleEntry({
-    type: "income",
+    type: "expense",
     amount,
-    category: CREDIT_CARD_CATEGORIES.payment,
-    date,
+    category: CREDIT_CARD_CATEGORIES.purchase,
+    date: getCreditCardEntryDate(targetMonth),
     note,
   });
 
@@ -1476,19 +1518,15 @@ async function saveCreditCardPayment(amount, { note, advanceMonth }) {
     setCreditCardBusy(true);
 
     if (shouldUseCloudPersistence()) {
-      setSyncNotice("Sincronizando", "Salvando pagamento do cartão na nuvem...", "warning");
+      setSyncNotice("Sincronizando", "Salvando lançamento do cartão na nuvem...", "warning");
       await upsertCloudTransactions([entry]);
       lastCloudSyncAt = new Date();
     }
 
     state.transactions = [entry, ...state.transactions];
-    elements.creditCardPaymentInput.value = "";
-
-    if (advanceMonth) {
-      moveToNextMonth();
-    } else {
-      state.selectedMonth = date.slice(0, 7);
-    }
+    elements.creditCardAmountInput.value = "";
+    elements.creditCardCategoryInput.value = "";
+    state.selectedMonth = targetMonth;
 
     saveState();
     populateYearOptions(Number(state.selectedMonth.slice(0, 4)));
@@ -1498,14 +1536,10 @@ async function saveCreditCardPayment(amount, { note, advanceMonth }) {
     if (shouldUseCloudPersistence()) {
       setSyncNotice("Sincronizado", getSyncedMessage(), "success");
     } else {
-      setLocalModeNotice(
-        advanceMonth
-          ? "Fatura paga. Cartão virado para o próximo mês."
-          : "Pagamento do cartão salvo neste aparelho.",
-      );
+      setLocalModeNotice("Lançamento do cartão salvo neste aparelho.");
     }
   } catch (error) {
-    handleCloudError("Não consegui salvar o pagamento do cartão.", error);
+    handleCloudError("Não consegui salvar o lançamento do cartão.", error);
   } finally {
     creditCardBusy = false;
     setCreditCardBusy(false);
@@ -1513,11 +1547,12 @@ async function saveCreditCardPayment(amount, { note, advanceMonth }) {
 }
 
 function setCreditCardBusy(isBusy) {
-  elements.creditCardPaymentInput.disabled = isBusy;
-  elements.payCreditCardButton.disabled = isBusy;
-  const submitButton = elements.creditCardPaymentForm.querySelector("button");
+  elements.creditCardAmountInput.disabled = isBusy;
+  elements.creditCardCategoryInput.disabled = isBusy;
+  elements.closeCreditCardInvoiceButton.disabled = isBusy;
+  const submitButton = elements.creditCardQuickForm.querySelector("button");
   submitButton.disabled = isBusy;
-  submitButton.textContent = isBusy ? "..." : "Abater";
+  submitButton.textContent = isBusy ? "..." : "Lancar";
 }
 
 function populateMonthOptions() {
@@ -2044,7 +2079,8 @@ function renderSummary() {
   const income = sumCurrentImpactsByDirection(monthEntries, "income");
   const expense = sumCurrentImpactsByDirection(monthEntries, "expense");
   const currentBalance = getCurrentBalanceThroughMonth(state.selectedMonth);
-  const creditCardBalance = getCreditCardBalanceForMonth(state.selectedMonth);
+  const creditCardMonth = getCreditCardEntryMonth();
+  const creditCardBalance = getCreditCardBalanceForMonth(creditCardMonth);
   const emergencyBalance = getAllocationBalanceThroughMonth("emergency", state.selectedMonth);
   const investmentsBalance = getAllocationBalanceThroughMonth("investments", state.selectedMonth);
 
@@ -2054,9 +2090,9 @@ function renderSummary() {
   elements.expenseValue.textContent = formatCurrency(expense);
   elements.creditCardValue.textContent = formatCurrency(creditCardBalance);
   elements.creditCardHint.textContent =
-    creditCardBalance > 0
-      ? `Fatura em aberto em ${formatMonthLabel(state.selectedMonth)}.`
-      : `Fatura zerada em ${formatMonthLabel(state.selectedMonth)}.`;
+    creditCardMonth === state.selectedMonth
+      ? `Fatura aberta em ${formatMonthLabel(creditCardMonth)}.`
+      : `Fatura de ${formatMonthLabel(state.selectedMonth)} fechada. Lançando em ${formatMonthLabel(creditCardMonth)}.`;
   elements.emergencyFundValue.textContent = formatCurrency(emergencyBalance);
   elements.investmentsValue.textContent = formatCurrency(investmentsBalance);
   elements.balanceHint.textContent =
@@ -2409,14 +2445,18 @@ function getSelectedEntryType() {
 }
 
 function getTransactionsForMonth(monthString) {
-  const directEntries = state.transactions.filter((entry) => entry.date.startsWith(monthString));
+  const directEntries = state.transactions.filter(
+    (entry) => entry.date.startsWith(monthString) && !isCreditCardCloseEntry(entry),
+  );
   const recurringEntries = getGeneratedRecurringTransactions(monthString);
 
   return [...directEntries, ...recurringEntries].sort(compareTransactionsDesc);
 }
 
 function getCurrentBalanceThroughMonth(monthString) {
-  const directEntries = state.transactions.filter((entry) => entry.date.slice(0, 7) <= monthString);
+  const directEntries = state.transactions.filter(
+    (entry) => entry.date.slice(0, 7) <= monthString && !isCreditCardCloseEntry(entry),
+  );
   const recurringEntries = getGeneratedRecurringTransactionsThroughMonth(monthString);
 
   const transactionBalance = [...directEntries, ...recurringEntries].reduce((total, entry) => {
@@ -2611,6 +2651,10 @@ function getAllocationKind(entry) {
 function getCurrentBalanceImpact(entry) {
   const categoryKey = normalizeCategoryKey(entry.category);
 
+  if (isCreditCardClosedKey(categoryKey)) {
+    return 0;
+  }
+
   if (isCreditCardPaymentKey(categoryKey)) {
     return 0;
   }
@@ -2632,6 +2676,10 @@ function getCurrentBalanceImpact(entry) {
 
 function getCreditCardBalanceImpact(entry) {
   const categoryKey = normalizeCategoryKey(entry.category);
+
+  if (isCreditCardClosedKey(categoryKey)) {
+    return 0;
+  }
 
   if (isCreditCardPaymentKey(categoryKey)) {
     return -entry.amount;
@@ -2695,6 +2743,14 @@ function isCreditCardPaymentKey(categoryKey) {
   return CREDIT_CARD_PAYMENT_KEYS.has(categoryKey);
 }
 
+function isCreditCardClosedKey(categoryKey) {
+  return CREDIT_CARD_CLOSED_KEYS.has(categoryKey);
+}
+
+function isCreditCardCloseEntry(entry) {
+  return isCreditCardClosedKey(normalizeCategoryKey(entry.category));
+}
+
 function getRollingMonths(count) {
   const months = [];
   const [year, month] = state.selectedMonth.split("-").map(Number);
@@ -2753,7 +2809,26 @@ function moveToNextMonth() {
   syncPeriodInputs();
 }
 
-function getCreditCardPaymentDate(monthString) {
+function getCreditCardEntryMonth() {
+  let month = state.selectedMonth;
+  const closedMonths = new Set(getCreditCardClosedMonths());
+
+  while (closedMonths.has(month)) {
+    month = getNextMonth(month);
+  }
+
+  return month;
+}
+
+function getCreditCardClosedMonths() {
+  const markerMonths = state.transactions
+    .filter(isCreditCardCloseEntry)
+    .map((entry) => entry.date.slice(0, 7));
+
+  return normalizeClosedMonths([...(state.creditCardClosedMonths || []), ...markerMonths]);
+}
+
+function getCreditCardEntryDate(monthString) {
   if (monthString === formatMonthInput(today)) {
     return formatDateInput(today);
   }

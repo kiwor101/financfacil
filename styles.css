@@ -650,7 +650,7 @@ select {
 
 .credit-card-actions {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1fr) auto;
   gap: 0.35rem;
   margin-top: 0.52rem;
 }
@@ -1367,6 +1367,10 @@ select {
   .summary-card-wallet .summary-value,
   .summary-card-credit .summary-value {
     font-size: 1.05rem;
+  }
+
+  .credit-card-actions {
+    grid-template-columns: 1fr;
   }
 
   .summary-footnote,
